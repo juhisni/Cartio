@@ -24,4 +24,16 @@ class QuickAddFlowTest {
         rule.onNodeWithTag("product_maito").fetchSemanticsNode()
         rule.onNodeWithTag("quick_add_input").fetchSemanticsNode()
     }
+
+    @Test fun typedUnknownProductCanBeAddedWithExplicitButton() {
+        rule.mainClock.advanceTimeBy(2_500)
+        rule.waitForIdle()
+        rule.onNodeWithTag("open_quick_add").performClick()
+        rule.onNodeWithTag("quick_add_input").performTextInput("testituote")
+        rule.onNodeWithTag("add_typed_product").performClick()
+        rule.waitUntil(5_000) {
+            runCatching { rule.onNodeWithTag("product_testituote").fetchSemanticsNode() }.isSuccess
+        }
+        rule.onNodeWithTag("quick_add_input").fetchSemanticsNode()
+    }
 }

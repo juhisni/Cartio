@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -13,9 +14,11 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
@@ -53,6 +56,16 @@ import fi.cartio.feature.shoppinglist.ShoppingListViewModel
         Column(Modifier.fillMaxWidth().fillMaxHeight(.82f).imePadding().padding(horizontal = 20.dp)) {
             Text(text.addProduct, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 14.dp))
             OutlinedTextField(value = state.query, onValueChange = viewModel::setQuery, modifier = Modifier.fillMaxWidth().focusRequester(focus).testTag("quick_add_input"), shape = RoundedCornerShape(16.dp), singleLine = true, placeholder = { Text(text.searchHint) }, leadingIcon = { Icon(Icons.Outlined.Search, null) }, keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done), keyboardActions = KeyboardActions(onDone = { viewModel.add() }))
+            if (state.query.isNotBlank()) {
+                FilledTonalButton(
+                    onClick = { viewModel.add() },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(top = 10.dp).testTag("add_typed_product"),
+                    shape = RoundedCornerShape(14.dp),
+                ) {
+                    Icon(Icons.Rounded.Add, contentDescription = null)
+                    Text(text.addTypedProduct.format(state.query.trim()), modifier = Modifier.padding(start = 8.dp))
+                }
+            }
             Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
                 if (state.query.isBlank()) {
                     SuggestionGroup(text.recent, state.recent, viewModel::add)
