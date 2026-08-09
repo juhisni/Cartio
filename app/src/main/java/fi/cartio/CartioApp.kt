@@ -24,11 +24,16 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
@@ -51,12 +56,33 @@ import fi.cartio.feature.settings.SettingsViewModel
 import fi.cartio.feature.shoppinglist.ShoppingListRoute
 import fi.cartio.feature.shoppinglist.ShoppingListViewModel
 import fi.cartio.ui.theme.CartioTheme
+import kotlinx.coroutines.delay
 
 private enum class Destination(val route: String, val icon: ImageVector) { Main("main", Icons.Outlined.Home), Saved("saved", Icons.Outlined.BookmarkBorder), Settings("settings", Icons.Outlined.Settings) }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CartioApp(settingsViewModel: SettingsViewModel = hiltViewModel(), shoppingViewModel: ShoppingListViewModel = hiltViewModel()) {
+fun CartioApp(
+    settingsViewModel: SettingsViewModel = hiltViewModel(),
+    shoppingViewModel: ShoppingListViewModel = hiltViewModel(),
+    onSplashFinished: () -> Unit = {},
+) {
+    var showSplash by remember { mutableStateOf(true) }
+    LaunchedEffect(Unit) {
+        delay(2_200)
+        showSplash = false
+        onSplashFinished()
+    }
+    if (showSplash) {
+        Image(
+            painter = painterResource(R.drawable.cartio_splash),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            alignment = Alignment.Center,
+            modifier = Modifier.fillMaxSize(),
+        )
+        return
+    }
     val preferences by settingsViewModel.settings.collectAsStateWithLifecycle()
     val dark = when (preferences.theme) { ThemePreference.DARK -> true; ThemePreference.LIGHT -> false; ThemePreference.SYSTEM -> isSystemInDarkTheme() }
     CartioTheme(darkTheme = dark) {
