@@ -22,7 +22,7 @@ data class CartioStrings(
     val offlineDescription: String,
 )
 
-val LocalStrings = staticCompositionLocalOf { strings(AppLanguage.FINNISH) }
+val LocalStrings = staticCompositionLocalOf { strings(AppLanguage.ENGLISH) }
 fun strings(language: AppLanguage) = if (language == AppLanguage.FINNISH) CartioStrings(
     "Ostoslista", "Päänäkymä", "Tallennetut", "Asetukset", "Lisää tuote", "Hae tai kirjoita tuote",
     "Viimeksi lisätyt", "Usein lisätyt", "Lista on vielä tyhjä", "Lisää ensimmäinen tuote nopeasti plus-painikkeesta.",

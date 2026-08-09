@@ -73,9 +73,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import fi.cartio.core.localization.LocalStrings
 import fi.cartio.core.designsystem.categoryIcon
 import fi.cartio.core.designsystem.productIcon
+import fi.cartio.core.designsystem.CartioScreenHeader
 import fi.cartio.core.localization.categoryName
 import fi.cartio.core.model.ProductCategory
 import fi.cartio.core.model.ShoppingItem
+import fi.cartio.core.model.formatQuantity
 import fi.cartio.ui.theme.CartioTheme
 import fi.cartio.R
 
@@ -106,10 +108,7 @@ fun ShoppingListScreen(state: ShoppingListUiState, contentPadding: PaddingValues
         contentPadding = PaddingValues(top = contentPadding.calculateTopPadding() + 8.dp, bottom = contentPadding.calculateBottomPadding() + 92.dp),
     ) {
         item {
-            Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp, bottom = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                Image(painterResource(R.drawable.cartio_foreground), contentDescription = null, modifier = Modifier.size(42.dp))
-                Text(LocalStrings.current.shoppingList, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f).padding(start = 10.dp))
-            }
+            CartioScreenHeader(LocalStrings.current.shoppingList, Modifier.padding(start = 20.dp, end = 12.dp, bottom = 10.dp))
         }
         if (state.groupedItems.isEmpty()) item {
             Column(Modifier.fillParentMaxSize().padding(horizontal = 48.dp, vertical = 72.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
@@ -161,7 +160,7 @@ private fun ProductRow(product: ShoppingItem, onToggle: (ShoppingItem) -> Unit, 
         Text(productIcon(product.name, product.category), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(end = 12.dp))
         Column(Modifier.weight(1f).padding(vertical = 9.dp)) {
             Text(product.name, fontWeight = FontWeight.Medium, textDecoration = if (product.checked) TextDecoration.LineThrough else null, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            product.quantity?.let { Text("${it}${product.unit.orEmpty()}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            product.quantity?.let { Text(formatQuantity(it, product.unit), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         }
         Box(
             Modifier.padding(11.dp).size(26.dp).background(if (product.checked) MaterialTheme.colorScheme.primary else Color.Transparent, CircleShape).border(1.5.dp, if (product.checked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, CircleShape),

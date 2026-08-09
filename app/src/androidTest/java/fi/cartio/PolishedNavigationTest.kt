@@ -14,10 +14,10 @@ class PolishedNavigationTest {
         rule.mainClock.advanceTimeBy(2_500)
         rule.waitForIdle()
 
-        rule.onNodeWithText("Tallennetut").performClick()
-        rule.onNodeWithText("Ei tallennettuja listoja").assertIsDisplayed()
+        rule.onNodeWithText("Saved").performClick()
+        rule.onNodeWithText("No saved lists").assertIsDisplayed()
 
-        rule.onNodeWithText("Asetukset").performClick()
-        rule.onNodeWithText("Nopea, rauhallinen ja täysin offline.").assertIsDisplayed()
+        rule.onNodeWithText("Settings").performClick()
+        rule.onNodeWithText("Fast, calm, and completely offline.").assertIsDisplayed()
     }
 }

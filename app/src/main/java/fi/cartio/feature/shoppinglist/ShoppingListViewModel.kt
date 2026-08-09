@@ -37,7 +37,7 @@ data class ShoppingListUiState(
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 class ShoppingListViewModel @Inject constructor(private val repository: CartioRepository) : ViewModel() {
     private val query = MutableStateFlow("")
-    private val language = MutableStateFlow(AppLanguage.FINNISH)
+    private val language = MutableStateFlow(AppLanguage.ENGLISH)
     private val history = MutableStateFlow(Pair(emptyList<ProductSuggestion>(), emptyList<ProductSuggestion>()))
     private val suggestions = combine(query.debounce(100).distinctUntilChanged(), language) { text, selectedLanguage ->
         text to selectedLanguage
