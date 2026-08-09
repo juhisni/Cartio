@@ -41,6 +41,36 @@ class CartioDatabaseTest {
         dao.restoreSavedList(deleted.list, deleted.items); assertEquals("Viikon ostokset", dao.observeSavedLists().first().single().name)
         dao.restore(savedId); assertEquals("Maito", dao.observeItems().first().single().name); dao.deleteItem(dao.observeItems().first().single().id); assertEquals(0, dao.observeItems().first().size)
     }
+    @Test fun namedListsPersistAndSwitchWithoutMixingItems() = runTest {
+        val dao = db.dao()
+        val weeklyId = dao.createAndActivateList("Weekly groceries")
+        val now = System.currentTimeMillis()
+        dao.insertItem(
+            ShoppingItemEntity(
+                name = "Milk",
+                normalizedName = "milk",
+                quantity = null,
+                unit = null,
+                category = ProductCategory.DAIRY,
+                checked = false,
+                createdAt = now,
+                updatedAt = now,
+            ),
+        )
+        dao.syncCurrentToActiveList()
+
+        val partyId = dao.createAndActivateList("Party")
+        assertEquals(0, dao.observeItems().first().size)
+        assertEquals(partyId, dao.observeActiveList().first()?.savedListId)
+
+        dao.activateSavedList(weeklyId)
+        assertEquals("Milk", dao.observeItems().first().single().name)
+        assertEquals("Weekly groceries", dao.observeActiveList().first()?.name)
+
+        dao.renameList(weeklyId, "Every week")
+        assertEquals("Every week", dao.observeActiveList().first()?.name)
+        assertEquals(2, dao.observeSavedLists().first().size)
+    }
     @Test fun englishAndFinnishQueriesProvideOneTapSuggestions() {
         val catalog = BundledProductCatalog(context)
         val engine = OfflineCategorySuggestionEngine(db.dao(), catalog)

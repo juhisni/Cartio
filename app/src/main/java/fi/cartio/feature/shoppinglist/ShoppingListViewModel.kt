@@ -7,6 +7,8 @@ import fi.cartio.core.model.ProductCategory
 import fi.cartio.core.model.ProductSuggestion
 import fi.cartio.core.model.ShoppingItem
 import fi.cartio.core.model.AppLanguage
+import fi.cartio.core.model.ActiveShoppingList
+import fi.cartio.core.model.SavedShoppingList
 import fi.cartio.domain.repository.CartioRepository
 import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
@@ -31,6 +33,8 @@ data class ShoppingListUiState(
     val suggestions: List<ProductSuggestion> = emptyList(),
     val recent: List<ProductSuggestion> = emptyList(),
     val frequent: List<ProductSuggestion> = emptyList(),
+    val activeList: ActiveShoppingList? = null,
+    val savedLists: List<SavedShoppingList> = emptyList(),
 )
 
 @HiltViewModel
@@ -44,8 +48,9 @@ class ShoppingListViewModel @Inject constructor(private val repository: CartioRe
     }.mapLatest { (text, selectedLanguage) ->
         repository.dictionarySuggestions(text, selectedLanguage)
     }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
-    val state: StateFlow<ShoppingListUiState> = combine(repository.items, query, history, suggestions) { items, text, usage, matches ->
-        ShoppingListUiState(items.groupBy { it.category }, text, matches, usage.first, usage.second)
+    private val listContext = combine(repository.items, repository.activeList, repository.savedLists) { items, active, saved -> Triple(items, active, saved) }
+    val state: StateFlow<ShoppingListUiState> = combine(listContext, query, history, suggestions) { context, text, usage, matches ->
+        ShoppingListUiState(context.first.groupBy { it.category }, text, matches, usage.first, usage.second, context.second, context.third)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ShoppingListUiState())
     private val feedbackChannel = Channel<String>(Channel.BUFFERED)
     val feedback = feedbackChannel.receiveAsFlow()
@@ -55,6 +60,8 @@ class ShoppingListViewModel @Inject constructor(private val repository: CartioRe
     init { refreshHistory() }
     fun setQuery(value: String) { query.value = value }
     fun setLanguage(value: AppLanguage) { language.value = value }
+    fun createList(name: String) { if (name.isNotBlank()) viewModelScope.launch { repository.createList(name) } }
+    fun activateList(id: Long) { viewModelScope.launch { repository.activateList(id) } }
     fun add(name: String = query.value) {
         if (name.isBlank()) return
         viewModelScope.launch {

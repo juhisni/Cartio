@@ -13,9 +13,21 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class QuickAddFlowTest {
     @get:Rule val rule = createAndroidComposeRule<MainActivity>()
+
+    private fun ensureActiveList(name: String) {
+        if (runCatching { rule.onNodeWithTag("open_quick_add").fetchSemanticsNode() }.isSuccess) return
+        rule.onNodeWithTag("create_new_list").performClick()
+        rule.onNodeWithTag("new_list_name").performTextInput(name)
+        rule.onNodeWithTag("confirm_create_list").performClick()
+        rule.waitUntil(5_000) {
+            runCatching { rule.onNodeWithTag("open_quick_add").fetchSemanticsNode() }.isSuccess
+        }
+    }
+
     @Test fun addMilkAndKeepSheetOpen() {
         rule.mainClock.advanceTimeBy(2_500)
         rule.waitForIdle()
+        ensureActiveList("Milk test")
         rule.onNodeWithTag("open_quick_add").performClick()
         rule.onNodeWithTag("quick_add_input").performTextInput("maito")
         rule.onNodeWithTag("quick_add_input").performImeAction()
@@ -28,6 +40,7 @@ class QuickAddFlowTest {
     @Test fun typedUnknownProductCanBeAddedWithExplicitButton() {
         rule.mainClock.advanceTimeBy(2_500)
         rule.waitForIdle()
+        ensureActiveList("Custom product test")
         rule.onNodeWithTag("open_quick_add").performClick()
         rule.onNodeWithTag("quick_add_input").performTextInput("testituote")
         rule.onNodeWithTag("add_typed_product").performClick()

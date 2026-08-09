@@ -27,6 +27,9 @@ import androidx.compose.material.icons.outlined.ExpandLess
 import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.ShoppingCart
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.KeyboardArrowDown
+import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.DropdownMenu
@@ -43,6 +46,10 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.TextButton
 import androidx.compose.foundation.Image
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -77,15 +84,19 @@ import fi.cartio.core.designsystem.CartioScreenHeader
 import fi.cartio.core.localization.categoryName
 import fi.cartio.core.model.ProductCategory
 import fi.cartio.core.model.ShoppingItem
+import fi.cartio.core.model.ActiveShoppingList
+import fi.cartio.core.model.SavedShoppingList
 import fi.cartio.core.model.formatQuantity
 import fi.cartio.ui.theme.CartioTheme
 import fi.cartio.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ShoppingListRoute(viewModel: ShoppingListViewModel, contentPadding: PaddingValues) {
+fun ShoppingListRoute(viewModel: ShoppingListViewModel, contentPadding: PaddingValues, onOpenSavedLists: () -> Unit) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var editing by remember { mutableStateOf<ShoppingItem?>(null) }
+    var creatingList by remember { mutableStateOf(false) }
+    var switchingList by remember { mutableStateOf(false) }
     val snackbar = remember { SnackbarHostState() }
     val strings = LocalStrings.current
     LaunchedEffect(viewModel, strings.undo) {
@@ -94,23 +105,52 @@ fun ShoppingListRoute(viewModel: ShoppingListViewModel, contentPadding: PaddingV
         }
     }
     Box(Modifier.fillMaxSize()) {
-        ShoppingListScreen(state, contentPadding, viewModel::toggle, viewModel::remove, onEdit = { editing = it })
+        ShoppingListScreen(
+            state, contentPadding, viewModel::toggle, viewModel::remove,
+            onEdit = { editing = it },
+            onCreateList = { creatingList = true },
+            onOpenSavedLists = onOpenSavedLists,
+            onSwitchList = { switchingList = true },
+        )
         SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).padding(bottom = contentPadding.calculateBottomPadding() + 76.dp))
     }
     editing?.let { item -> ProductEditorSheet(item, onDismiss = { editing = null }, onSave = { viewModel.update(it); editing = null }) }
+    if (creatingList) CreateListSheet(onDismiss = { creatingList = false }, onCreate = { viewModel.createList(it); creatingList = false })
+    if (switchingList) SwitchListSheet(
+        active = state.activeList,
+        lists = state.savedLists,
+        onDismiss = { switchingList = false },
+        onActivate = { viewModel.activateList(it); switchingList = false },
+        onCreate = { switchingList = false; creatingList = true },
+        onManage = { switchingList = false; onOpenSavedLists() },
+    )
 }
 
 @Composable
-fun ShoppingListScreen(state: ShoppingListUiState, contentPadding: PaddingValues, onToggle: (ShoppingItem) -> Unit, onRemove: (ShoppingItem) -> Unit, onEdit: (ShoppingItem) -> Unit = {}) {
+fun ShoppingListScreen(
+    state: ShoppingListUiState,
+    contentPadding: PaddingValues,
+    onToggle: (ShoppingItem) -> Unit,
+    onRemove: (ShoppingItem) -> Unit,
+    onEdit: (ShoppingItem) -> Unit = {},
+    onCreateList: () -> Unit = {},
+    onOpenSavedLists: () -> Unit = {},
+    onSwitchList: () -> Unit = {},
+) {
     var collapsedCategories by rememberSaveable { mutableStateOf(emptySet<String>()) }
     LazyColumn(
         modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).animateContentSize(),
         contentPadding = PaddingValues(top = contentPadding.calculateTopPadding() + 16.dp, bottom = contentPadding.calculateBottomPadding() + 92.dp),
     ) {
         item {
-            CartioScreenHeader(LocalStrings.current.shoppingList, Modifier.padding(start = 20.dp, end = 12.dp, bottom = 10.dp))
+            CartioScreenHeader(if (state.activeList == null) "Cartio" else LocalStrings.current.shoppingList, Modifier.padding(start = 20.dp, end = 12.dp, bottom = 10.dp))
         }
-        if (state.groupedItems.isEmpty()) item {
+        if (state.activeList == null) {
+            item { NoActiveListState(onCreateList, onOpenSavedLists) }
+        } else {
+            item { ActiveListCard(state.activeList, onSwitchList) }
+        }
+        if (state.activeList != null && state.groupedItems.isEmpty()) item {
             Column(Modifier.fillParentMaxSize().padding(horizontal = 48.dp, vertical = 72.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
                 Image(painterResource(R.drawable.cartio_foreground), contentDescription = null, modifier = Modifier.size(110.dp))
                 Spacer(Modifier.height(24.dp))
@@ -118,7 +158,7 @@ fun ShoppingListScreen(state: ShoppingListUiState, contentPadding: PaddingValues
                 Text(LocalStrings.current.emptyBody, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.fillMaxWidth().padding(top = 10.dp), style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Center)
             }
         }
-        ProductCategory.entries.forEach { category ->
+        if (state.activeList != null) ProductCategory.entries.forEach { category ->
             val products = state.groupedItems[category].orEmpty()
             if (products.isNotEmpty()) {
                 val collapsed = category.name in collapsedCategories
@@ -129,6 +169,87 @@ fun ShoppingListScreen(state: ShoppingListUiState, contentPadding: PaddingValues
                 }
                 if (!collapsed) items(products, key = { it.id }) { product -> ProductRow(product, onToggle, onRemove, onEdit) }
             }
+        }
+    }
+}
+
+@Composable
+private fun NoActiveListState(onCreate: () -> Unit, onOpenSaved: () -> Unit) {
+    val strings = LocalStrings.current
+    Column(Modifier.fillMaxWidth().padding(horizontal = 32.dp, vertical = 64.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Image(painterResource(R.drawable.cartio_foreground), contentDescription = null, modifier = Modifier.size(112.dp))
+        Text(strings.whatWouldYouLike, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 24.dp))
+        Button(onClick = onCreate, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth().padding(top = 24.dp).height(54.dp).testTag("create_new_list")) { Text(strings.createNewList) }
+        OutlinedButton(onClick = onOpenSaved, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth().padding(top = 10.dp).height(54.dp)) { Text(strings.openSavedLists) }
+        Row(Modifier.padding(top = 36.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Outlined.Lock, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+            Text(strings.listsStayOnDevice, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 8.dp))
+        }
+    }
+}
+
+@Composable
+private fun ActiveListCard(active: ActiveShoppingList, onSwitch: () -> Unit) {
+    val strings = LocalStrings.current
+    Card(
+        onClick = onSwitch,
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 4.dp).testTag("active_list_card"),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(0.dp),
+    ) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(strings.currentList, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                Text(active.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(strings.listProgress.format(active.itemCount, active.completedCount), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Icon(Icons.Outlined.KeyboardArrowDown, strings.switchList)
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CreateListSheet(onDismiss: () -> Unit, onCreate: (String) -> Unit) {
+    var name by remember { mutableStateOf("") }
+    val strings = LocalStrings.current
+    ModalBottomSheet(onDismissRequest = onDismiss, shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)) {
+        Column(Modifier.fillMaxWidth().imePadding().padding(horizontal = 20.dp, vertical = 8.dp).padding(bottom = 24.dp)) {
+            Text(strings.createNewList, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 16.dp))
+            OutlinedTextField(name, { name = it }, label = { Text(strings.listName) }, singleLine = true, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth().testTag("new_list_name"))
+            Button(onClick = { onCreate(name.trim()) }, enabled = name.isNotBlank(), shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth().padding(top = 12.dp).height(54.dp).testTag("confirm_create_list")) { Text(strings.createList) }
+            TextButton(onClick = onDismiss, modifier = Modifier.align(Alignment.CenterHorizontally)) { Text(strings.cancel) }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SwitchListSheet(active: ActiveShoppingList?, lists: List<SavedShoppingList>, onDismiss: () -> Unit, onActivate: (Long) -> Unit, onCreate: () -> Unit, onManage: () -> Unit) {
+    val strings = LocalStrings.current
+    ModalBottomSheet(onDismissRequest = onDismiss, shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(bottom = 24.dp)) {
+            Text(strings.switchList, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.CenterHorizontally).padding(bottom = 14.dp))
+            lists.forEach { list ->
+                val selected = list.id == active?.savedListId
+                Surface(
+                    onClick = { if (!selected) onActivate(list.id) },
+                    shape = RoundedCornerShape(14.dp),
+                    color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLow,
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                ) {
+                    Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text(list.name, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(strings.itemCount.format(if (selected) active.itemCount else list.itemCount), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        if (selected) Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surface) { Text(strings.active, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp)) }
+                    }
+                }
+            }
+            TextButton(onClick = onCreate, modifier = Modifier.fillMaxWidth()) { Icon(Icons.Outlined.Add, null); Text(strings.createNewList, modifier = Modifier.padding(start = 8.dp)) }
+            TextButton(onClick = onManage, modifier = Modifier.fillMaxWidth()) { Text(strings.manageSavedLists) }
         }
     }
 }

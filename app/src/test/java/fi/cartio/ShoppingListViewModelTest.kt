@@ -1,6 +1,7 @@
 package fi.cartio
 
 import fi.cartio.core.model.AppLanguage
+import fi.cartio.core.model.ActiveShoppingList
 import fi.cartio.core.model.ProductCategory
 import fi.cartio.core.model.ProductSuggestion
 import fi.cartio.core.model.SavedShoppingList
@@ -62,6 +63,9 @@ private class FakeRepository : CartioRepository {
     private val mutableItems = MutableStateFlow<List<ShoppingItem>>(emptyList())
     override val items = mutableItems
     override val savedLists = MutableStateFlow<List<SavedShoppingList>>(emptyList())
+    override val activeList = MutableStateFlow<ActiveShoppingList?>(ActiveShoppingList(1, "Test list", 0, 0))
+    override suspend fun createList(name: String) = Unit
+    override suspend fun activateList(id: Long) = Unit
     override suspend fun add(name: String): ShoppingItem = ShoppingItem(1, name.replaceFirstChar { it.uppercase() }, name.lowercase(), category = ProductCategory.DAIRY).also { mutableItems.value = listOf(it) }
     override suspend fun toggle(item: ShoppingItem) { mutableItems.value = listOf(item.copy(checked = !item.checked)) }
     override suspend fun update(item: ShoppingItem) { mutableItems.value = listOf(item) }

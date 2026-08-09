@@ -87,6 +87,7 @@ fun CartioApp(
         return
     }
     val preferences by settingsViewModel.settings.collectAsStateWithLifecycle()
+    val shoppingState by shoppingViewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(preferences.language) { shoppingViewModel.setLanguage(preferences.language) }
     val dark = when (preferences.theme) { ThemePreference.DARK -> true; ThemePreference.LIGHT -> false; ThemePreference.SYSTEM -> isSystemInDarkTheme() }
     SideEffect { onDarkThemeChanged(dark) }
@@ -108,13 +109,13 @@ fun CartioApp(
                     }
                 },
                 floatingActionButton = {
-                    if (current == Destination.Main.route) FloatingActionButton(onClick = { quickAdd = true }, modifier = Modifier.size(64.dp).shadow(12.dp, CircleShape).testTag("open_quick_add"), shape = CircleShape, containerColor = MaterialTheme.colorScheme.primary) { Icon(Icons.Rounded.Add, contentDescription = labels.addProduct, modifier = Modifier.size(32.dp)) }
+                    if (current == Destination.Main.route && shoppingState.activeList != null) FloatingActionButton(onClick = { quickAdd = true }, modifier = Modifier.size(64.dp).shadow(12.dp, CircleShape).testTag("open_quick_add"), shape = CircleShape, containerColor = MaterialTheme.colorScheme.primary) { Icon(Icons.Rounded.Add, contentDescription = labels.addProduct, modifier = Modifier.size(32.dp)) }
                 },
                 floatingActionButtonPosition = FabPosition.Center,
             ) { padding ->
                 Box(Modifier.fillMaxSize()) {
                     NavHost(navController = nav, startDestination = Destination.Main.route) {
-                        composable(Destination.Main.route) { ShoppingListRoute(shoppingViewModel, padding) }
+                        composable(Destination.Main.route) { ShoppingListRoute(shoppingViewModel, padding, onOpenSavedLists = { nav.navigate(Destination.Saved.route) }) }
                         composable(Destination.Saved.route) { SavedListsRoute(contentPadding = padding, onRestored = { nav.navigate(Destination.Main.route) }) }
                         composable(Destination.Settings.route) { SettingsRoute(settingsViewModel, padding) }
                     }

@@ -3,6 +3,7 @@ package fi.cartio.domain.repository
 import fi.cartio.core.model.ProductCategory
 import fi.cartio.core.model.ProductSuggestion
 import fi.cartio.core.model.AppLanguage
+import fi.cartio.core.model.ActiveShoppingList
 import fi.cartio.core.model.SavedShoppingList
 import fi.cartio.core.model.SavedListSnapshot
 import fi.cartio.core.model.ShoppingItem
@@ -11,6 +12,9 @@ import kotlinx.coroutines.flow.Flow
 interface CartioRepository {
     val items: Flow<List<ShoppingItem>>
     val savedLists: Flow<List<SavedShoppingList>>
+    val activeList: Flow<ActiveShoppingList?>
+    suspend fun createList(name: String)
+    suspend fun activateList(id: Long)
     suspend fun add(name: String): ShoppingItem
     suspend fun toggle(item: ShoppingItem)
     suspend fun update(item: ShoppingItem)
