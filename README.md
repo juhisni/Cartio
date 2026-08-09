@@ -42,5 +42,5 @@ $env:JAVA_HOME='C:\Program Files\Android\Android Studio\jbr'
 
 ## Current limitations
 
-- The bundled catalog contains 3,815 distinct Finnish/English products adapted from Fineli Release 20. Alternate language names are search aliases, not separate product variants.
+- The bundled catalog is a curated collection of recognizable everyday Finnish/English grocery products adapted from Fineli Release 20. Nutritional, preparation, package-size, and synthetic variants are excluded.
 - No barcode scanner, cloud sync, accounts, analytics, notifications, or networking.

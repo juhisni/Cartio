@@ -63,6 +63,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import fi.cartio.core.localization.LocalStrings
+import fi.cartio.core.designsystem.categoryIcon
+import fi.cartio.core.designsystem.productIcon
 import fi.cartio.core.localization.categoryName
 import fi.cartio.core.model.ProductCategory
 import fi.cartio.core.model.ShoppingItem
@@ -135,7 +137,7 @@ private fun CategoryHeader(category: ProductCategory, count: Int, collapsed: Boo
         Modifier.fillMaxWidth().testTag("category_${category.name}").background(tint.copy(alpha = .07f)).clickable(role = Role.Button, onClickLabel = if (collapsed) strings.expandCategory else strings.collapseCategory, onClick = onToggle).padding(start = 20.dp, end = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(categoryEmoji(category), modifier = Modifier.padding(end = 9.dp, top = 12.dp, bottom = 12.dp))
+        Text(categoryIcon(category), modifier = Modifier.padding(end = 9.dp, top = 12.dp, bottom = 12.dp))
         Text(categoryName(category), modifier = Modifier.weight(1f), color = tint, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelLarge)
         Surface(shape = CircleShape, color = tint.copy(alpha = .14f)) { Text(count.toString(), color = tint, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 9.dp, vertical = 3.dp)) }
         Icon(if (collapsed) Icons.Outlined.ExpandMore else Icons.Outlined.ExpandLess, contentDescription = null, tint = tint, modifier = Modifier.padding(start = 4.dp).size(24.dp))
@@ -148,7 +150,7 @@ private fun ProductRow(product: ShoppingItem, onToggle: (ShoppingItem) -> Unit, 
         Modifier.fillMaxWidth().testTag("product_${product.normalizedName}").clickable(role = Role.Checkbox) { onToggle(product) }.alpha(if (product.checked) .58f else 1f).padding(start = 20.dp, end = 8.dp, top = 5.dp, bottom = 5.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(productEmoji(product), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(end = 12.dp))
+        Text(productIcon(product.name, product.category), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(end = 12.dp))
         Text(product.name, modifier = Modifier.weight(1f).padding(vertical = 11.dp), fontWeight = FontWeight.Medium, textDecoration = if (product.checked) TextDecoration.LineThrough else null)
         product.quantity?.let { Text("${it}${product.unit.orEmpty()}", color = MaterialTheme.colorScheme.onSurfaceVariant) }
         Box(
@@ -185,8 +187,6 @@ private fun ProductEditorSheet(item: ShoppingItem, onDismiss: () -> Unit, onSave
     }
 }
 
-private fun categoryEmoji(category: ProductCategory) = when (category) { ProductCategory.FRUITS_VEGETABLES -> "🥬"; ProductCategory.DAIRY -> "🥛"; ProductCategory.BREAD_GRAINS -> "🌾"; ProductCategory.MEAT_FISH -> "🐟"; ProductCategory.FROZEN -> "❄️"; ProductCategory.PANTRY -> "🥫"; ProductCategory.DRINKS -> "🧃"; ProductCategory.HOUSEHOLD -> "🧻"; ProductCategory.OTHER -> "🛒" }
-private fun productEmoji(item: ShoppingItem): String = when { "banaan" in item.normalizedName || "banana" in item.normalizedName -> "🍌"; "maito" in item.normalizedName || "milk" in item.normalizedName -> "🥛"; "toma" in item.normalizedName -> "🍅"; "leip" in item.normalizedName || "bread" in item.normalizedName -> "🍞"; "juusto" in item.normalizedName || "cheese" in item.normalizedName -> "🧀"; "lohi" in item.normalizedName || "salmon" in item.normalizedName -> "🐟"; else -> categoryEmoji(item.category) }
 private fun categoryTint(category: ProductCategory) = when (category) { ProductCategory.DAIRY -> Color(0xFF2F79B9); ProductCategory.BREAD_GRAINS -> Color(0xFF9A6A12); ProductCategory.MEAT_FISH -> Color(0xFFC45151); ProductCategory.FROZEN -> Color(0xFF398FA7); ProductCategory.DRINKS -> Color(0xFF6D62B8); ProductCategory.HOUSEHOLD -> Color(0xFF7B6A57); else -> Color(0xFF287A36) }
 
 @Preview(showBackground = true)

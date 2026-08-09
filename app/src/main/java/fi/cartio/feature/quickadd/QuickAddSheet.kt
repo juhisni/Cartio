@@ -36,6 +36,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.material3.MaterialTheme
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import fi.cartio.core.localization.LocalStrings
+import fi.cartio.core.designsystem.productIcon
 import fi.cartio.core.model.ProductSuggestion
 import fi.cartio.feature.shoppinglist.ShoppingListViewModel
 
@@ -60,7 +61,5 @@ import fi.cartio.feature.shoppinglist.ShoppingListViewModel
 @Composable private fun SuggestionGroup(title: String, values: List<ProductSuggestion>, onAdd: (String) -> Unit) {
     if (values.isEmpty()) return
     Text(title, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 18.dp, bottom = 6.dp))
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { values.distinctBy { it.name }.forEach { suggestion -> AssistChip(onClick = { onAdd(suggestion.name) }, shape = RoundedCornerShape(12.dp), colors = AssistChipDefaults.assistChipColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), label = { Text("${suggestionIcon(suggestion.name)}  ${suggestion.name}") }) } }
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { values.distinctBy { it.name }.forEach { suggestion -> AssistChip(onClick = { onAdd(suggestion.name) }, shape = RoundedCornerShape(12.dp), colors = AssistChipDefaults.assistChipColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), label = { Text("${productIcon(suggestion.name, suggestion.category)}  ${suggestion.name}") }) } }
 }
-
-private fun suggestionIcon(name: String): String = when { name.contains("banaan", true) -> "🍌"; name.contains("maito", true) -> "🥛"; name.contains("leip", true) -> "🍞"; name.contains("juusto", true) -> "🧀"; name.contains("kurk", true) -> "🥒"; name.contains("pasta", true) -> "🍝"; else -> "🛒" }

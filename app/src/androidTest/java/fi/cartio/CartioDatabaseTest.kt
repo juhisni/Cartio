@@ -43,7 +43,7 @@ class CartioDatabaseTest {
         val catalog = BundledProductCatalog(context)
         val engine = OfflineCategorySuggestionEngine(db.dao(), catalog)
         val repository = OfflineCartioRepository(db.dao(), engine)
-        assertEquals(3815, catalog.products.size)
+        assertEquals(535, catalog.products.size)
         val eggs = repository.dictionarySuggestions("egg")
         assertEquals(ProductCategory.DAIRY, eggs.first { it.name == "Eggs" }.category)
         assertEquals("Appelsiini", repository.dictionarySuggestions("appels").first().name)

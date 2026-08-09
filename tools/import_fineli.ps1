@@ -21,17 +21,17 @@ function Get-CartioCategory([string]$foodClass, [string]$fiName, [string]$enName
 
 $seen = @{}
 $rows = [System.Collections.Generic.List[string]]::new()
-$ordered = $foods | Sort-Object @{ Expression = { if ($_.FOODTYPE -eq 'FOOD') { 0 } else { 1 } } }, @{ Expression = { [int]$_.FOODID } }
+$ordered = $foods | Where-Object { $_.FOODTYPE -eq 'FOOD' } | Sort-Object @{ Expression = { [int]$_.FOODID } }
 foreach ($food in $ordered) {
-    $fiName = ($finnish[$food.FOODID] -replace '[\t\r\n]+', ' ').Trim()
-    $enName = ($english[$food.FOODID] -replace '[\t\r\n]+', ' ').Trim()
-    if (-not $fiName -or -not $enName -or $fiName -match '^(POISTETTU|REMOVED)' -or $enName -match '^(POISTETTU|REMOVED)') { continue }
-    $key = ($fiName.ToLowerInvariant() + '|' + $enName.ToLowerInvariant())
+    $fiName = (($finnish[$food.FOODID] -replace '[\t\r\n]+', ' ').Split(',')[0]).Trim()
+    $enName = (($english[$food.FOODID] -replace '[\t\r\n]+', ' ').Split(',')[0] -replace '(?i)\s+(WITH|WITHOUT|AVERAGE).*$','').Trim()
+    if (-not $fiName -or -not $enName -or $fiName -match '^(POISTETTU|REMOVED|\(ARC\))' -or $enName -match '^(POISTETTU|REMOVED|\(ARC\))') { continue }
+    if ($fiName -match '\d|%|VALIO|MCDONALD|HESBURGER|ATRIA|HK ' -or $enName -match '\d|%' -or $fiName.Length -gt 32 -or $enName.Length -gt 40) { continue }
+    $key = $fiName.ToLowerInvariant()
     if ($seen.ContainsKey($key)) { continue }
     $seen[$key] = $true
     $category = Get-CartioCategory $food.FUCLASS $fiName $enName
     $rows.Add("$category`t$fiName`t$enName")
-    if ($rows.Count -eq 3800) { break }
 }
 
 $household = @(
