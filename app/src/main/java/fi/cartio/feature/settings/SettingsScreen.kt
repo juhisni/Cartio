@@ -40,7 +40,7 @@ fun SettingsRoute(viewModel: SettingsViewModel, contentPadding: PaddingValues) {
     val state by viewModel.settings.collectAsStateWithLifecycle(); val strings = LocalStrings.current
     LazyColumn(
         Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
-        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = contentPadding.calculateTopPadding() + 20.dp, bottom = contentPadding.calculateBottomPadding() + 24.dp),
+        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = contentPadding.calculateTopPadding() + 16.dp, bottom = contentPadding.calculateBottomPadding() + 24.dp),
     ) {
         item { CartioScreenHeader(strings.settings, Modifier.padding(bottom = 18.dp)) }
         item {

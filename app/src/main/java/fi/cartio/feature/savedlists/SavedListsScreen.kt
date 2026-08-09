@@ -73,7 +73,7 @@ fun SavedListsRoute(contentPadding: PaddingValues, onRestored: () -> Unit, viewM
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
         item {
-            CartioScreenHeader(strings.saved, Modifier.padding(horizontal = 20.dp, vertical = 4.dp)) {
+            CartioScreenHeader(strings.saved, Modifier.padding(horizontal = 20.dp)) {
                 FilledTonalIconButton(onClick = { dialog = DialogState.Save }, modifier = Modifier.size(48.dp)) { Icon(Icons.Outlined.Add, strings.saveList) }
             }
         }

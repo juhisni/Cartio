@@ -105,16 +105,14 @@ fun ShoppingListScreen(state: ShoppingListUiState, contentPadding: PaddingValues
     var collapsedCategories by rememberSaveable { mutableStateOf(emptySet<String>()) }
     LazyColumn(
         modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).animateContentSize(),
-        contentPadding = PaddingValues(top = contentPadding.calculateTopPadding() + 8.dp, bottom = contentPadding.calculateBottomPadding() + 92.dp),
+        contentPadding = PaddingValues(top = contentPadding.calculateTopPadding() + 16.dp, bottom = contentPadding.calculateBottomPadding() + 92.dp),
     ) {
         item {
             CartioScreenHeader(LocalStrings.current.shoppingList, Modifier.padding(start = 20.dp, end = 12.dp, bottom = 10.dp))
         }
         if (state.groupedItems.isEmpty()) item {
             Column(Modifier.fillParentMaxSize().padding(horizontal = 48.dp, vertical = 72.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primary.copy(alpha = .08f), modifier = Modifier.size(110.dp)) {
-                    Box(contentAlignment = Alignment.Center) { Image(painterResource(R.drawable.cartio_foreground), contentDescription = null, modifier = Modifier.size(96.dp)) }
-                }
+                Image(painterResource(R.drawable.cartio_foreground), contentDescription = null, modifier = Modifier.size(110.dp))
                 Spacer(Modifier.height(24.dp))
                 Text(LocalStrings.current.emptyTitle, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
                 Text(LocalStrings.current.emptyBody, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.fillMaxWidth().padding(top = 10.dp), style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Center)
