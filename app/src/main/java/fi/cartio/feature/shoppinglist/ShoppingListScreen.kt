@@ -27,6 +27,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.foundation.Image
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -34,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -45,6 +47,7 @@ import fi.cartio.core.localization.categoryName
 import fi.cartio.core.model.ProductCategory
 import fi.cartio.core.model.ShoppingItem
 import fi.cartio.ui.theme.CartioTheme
+import fi.cartio.R
 
 @Composable
 fun ShoppingListRoute(viewModel: ShoppingListViewModel, contentPadding: PaddingValues) {
@@ -60,15 +63,15 @@ fun ShoppingListScreen(state: ShoppingListUiState, contentPadding: PaddingValues
     ) {
         item {
             Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp, bottom = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Outlined.ShoppingCart, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
+                Image(painterResource(R.drawable.cartio_logo), contentDescription = null, modifier = Modifier.size(38.dp))
                 Text(LocalStrings.current.shoppingList, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f).padding(start = 10.dp))
                 IconButton(onClick = {}) { Icon(Icons.Outlined.MoreVert, contentDescription = null) }
             }
         }
         if (state.groupedItems.isEmpty()) item {
             Column(Modifier.fillParentMaxSize().padding(horizontal = 48.dp, vertical = 72.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primary.copy(alpha = .10f), modifier = Modifier.size(92.dp)) {
-                    Box(contentAlignment = Alignment.Center) { Icon(Icons.Outlined.ShoppingCart, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(46.dp)) }
+                Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primary.copy(alpha = .08f), modifier = Modifier.size(110.dp)) {
+                    Box(contentAlignment = Alignment.Center) { Image(painterResource(R.drawable.cartio_logo), contentDescription = null, modifier = Modifier.size(88.dp)) }
                 }
                 Spacer(Modifier.height(24.dp))
                 Text(LocalStrings.current.emptyTitle, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
