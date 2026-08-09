@@ -15,6 +15,7 @@ data class CartioStrings(
     val editProduct: String, val productName: String, val quantity: String, val unit: String, val category: String,
     val removed: String, val undo: String, val expandCategory: String, val collapseCategory: String,
     val searchLists: String, val noMatchingLists: String,
+    val catalogAttribution: String,
 )
 
 val LocalStrings = staticCompositionLocalOf { strings(AppLanguage.FINNISH) }
@@ -24,14 +25,14 @@ fun strings(language: AppLanguage) = if (language == AppLanguage.FINNISH) Cartio
     "Tallenna lista", "Listan nimi", "Ota käyttöön", "Nimeä uudelleen", "Poista", "Kieli / Language", "Teema", "Tietoja sovelluksesta",
     "Vaalea", "Tumma", "Järjestelmän mukaan", "Suomi", "English", "Peruuta", "Tallenna", "lisätty",
     "Muokkaa tuotetta", "Tuotteen nimi", "Määrä", "Yksikkö", "Kategoria", "poistettu", "Kumoa", "Laajenna kategoria", "Tiivistä kategoria",
-    "Hae listoja", "Hakua vastaavia listoja ei löytynyt"
+    "Hae listoja", "Hakua vastaavia listoja ei löytynyt", "Tuoteluettelo: Fineli / THL, CC BY 4.0"
 ) else CartioStrings(
     "Shopping list", "Main", "Saved", "Settings", "Add product", "Search or type a product",
     "Recently added", "Frequently added", "Your list is empty", "Add your first product quickly with the plus button.",
     "Save list", "List name", "Use list", "Rename", "Delete", "Language", "Theme", "About Cartio",
     "Light", "Dark", "System default", "Finnish", "English", "Cancel", "Save", "added",
     "Edit product", "Product name", "Quantity", "Unit", "Category", "removed", "Undo", "Expand category", "Collapse category",
-    "Search lists", "No matching lists found"
+    "Search lists", "No matching lists found", "Product catalog: Fineli / THL, CC BY 4.0"
 )
 
 @Composable fun categoryName(category: ProductCategory): String {

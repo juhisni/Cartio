@@ -42,5 +42,5 @@ $env:JAVA_HOME='C:\Program Files\Android\Android Studio\jbr'
 
 ## Current limitations
 
-- The bundled catalog contains roughly 900 generic product concepts and 3,000–4,000 Finnish/English search terms; it intentionally avoids brand-specific SKUs.
+- The bundled catalog contains 3,815 distinct Finnish/English products adapted from Fineli Release 20. Alternate language names are search aliases, not separate product variants.
 - No barcode scanner, cloud sync, accounts, analytics, notifications, or networking.

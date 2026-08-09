@@ -9,6 +9,7 @@ import fi.cartio.data.local.CartioDatabase
 import fi.cartio.data.local.LearnedProductCategoryEntity
 import fi.cartio.data.local.ShoppingItemEntity
 import fi.cartio.domain.suggestion.OfflineCategorySuggestionEngine
+import fi.cartio.domain.suggestion.BundledProductCatalog
 import fi.cartio.data.repository.OfflineCartioRepository
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -21,10 +22,11 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class CartioDatabaseTest {
     private lateinit var db: CartioDatabase
-    @Before fun create() { db = Room.inMemoryDatabaseBuilder(ApplicationProvider.getApplicationContext<Context>(), CartioDatabase::class.java).allowMainThreadQueries().build() }
+    private lateinit var context: Context
+    @Before fun create() { context = ApplicationProvider.getApplicationContext(); db = Room.inMemoryDatabaseBuilder(context, CartioDatabase::class.java).allowMainThreadQueries().build() }
     @After fun close() = db.close()
     @Test fun aliasesFallbackAndLearnedOverride() = runTest {
-        val engine = OfflineCategorySuggestionEngine(db.dao())
+        val engine = OfflineCategorySuggestionEngine(db.dao(), BundledProductCatalog(context))
         assertEquals(ProductCategory.DAIRY, engine.suggest("maito")); assertEquals(ProductCategory.DAIRY, engine.suggest("milk"))
         assertEquals(ProductCategory.FRUITS_VEGETABLES, engine.suggest("banana")); assertEquals(ProductCategory.OTHER, engine.suggest("mystery item"))
         db.dao().learn(LearnedProductCategoryEntity("mystery item", ProductCategory.PANTRY)); assertEquals(ProductCategory.PANTRY, engine.suggest("mystery item"))
@@ -38,8 +40,10 @@ class CartioDatabaseTest {
         dao.restore(savedId); assertEquals("Maito", dao.observeItems().first().single().name); dao.deleteItem(dao.observeItems().first().single().id); assertEquals(0, dao.observeItems().first().size)
     }
     @Test fun englishAndFinnishQueriesProvideOneTapSuggestions() {
-        val engine = OfflineCategorySuggestionEngine(db.dao())
+        val catalog = BundledProductCatalog(context)
+        val engine = OfflineCategorySuggestionEngine(db.dao(), catalog)
         val repository = OfflineCartioRepository(db.dao(), engine)
+        assertEquals(3815, catalog.products.size)
         val eggs = repository.dictionarySuggestions("egg")
         assertEquals(ProductCategory.DAIRY, eggs.first { it.name == "Eggs" }.category)
         assertEquals("Appelsiini", repository.dictionarySuggestions("appels").first().name)
