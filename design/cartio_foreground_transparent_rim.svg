@@ -1,0 +1,136 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="738" height="718" viewBox="0 0 738 718">
+<defs>
+  <linearGradient id="handle" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#5d646a"/>
+    <stop offset=".42" stop-color="#343b41"/>
+    <stop offset="1" stop-color="#1c242b"/>
+  </linearGradient>
+  <linearGradient id="basket" x1=".05" y1=".08" x2=".92" y2=".92">
+    <stop offset="0" stop-color="#c8ed37"/>
+    <stop offset=".45" stop-color="#8ed536"/>
+    <stop offset="1" stop-color="#279a3d"/>
+  </linearGradient>
+  <linearGradient id="basketFacet" x1="0" y1="0" x2="1" y2=".9">
+    <stop offset="0" stop-color="#d0f03b"/>
+    <stop offset=".55" stop-color="#8bd235"/>
+    <stop offset="1" stop-color="#36aa3d"/>
+  </linearGradient>
+  <linearGradient id="lower" x1=".08" y1=".08" x2=".92" y2=".95">
+    <stop offset="0" stop-color="#9bd83b"/>
+    <stop offset=".55" stop-color="#58bc3c"/>
+    <stop offset="1" stop-color="#218f40"/>
+  </linearGradient>
+  <radialGradient id="wheel" cx=".32" cy=".25" r=".78">
+    <stop offset="0" stop-color="#596168"/>
+    <stop offset=".48" stop-color="#353c43"/>
+    <stop offset="1" stop-color="#171d22"/>
+  </radialGradient>
+  <radialGradient id="inside" cx=".52" cy=".05" r=".85">
+    <stop offset="0" stop-color="#b8e83b"/>
+    <stop offset=".52" stop-color="#82d337"/>
+    <stop offset="1" stop-color="#42b33b"/>
+  </radialGradient>
+  <filter id="shadow" x="-30%" y="-30%" width="160%" height="180%">
+    <feDropShadow dx="0" dy="7" stdDeviation="7" flood-color="#000" flood-opacity=".18"/>
+  </filter>
+  <filter id="soft" x="-40%" y="-40%" width="180%" height="200%">
+    <feGaussianBlur stdDeviation="8"/>
+  </filter>
+  <clipPath id="topClip">
+    <path d="M181 218 C207 190 283 176 404 176 C518 176 600 190 623 217
+             C620 258 604 315 570 365 C540 397 486 410 406 410
+             C326 410 271 397 241 366 C207 316 188 259 181 218Z"/>
+  </clipPath>
+  <clipPath id="lowerClip">
+    <path d="M250 373 C291 391 343 399 405 399 C465 399 518 391 558 373
+             L529 486 C520 514 477 527 405 527 C335 527 293 513 282 486Z"/>
+  </clipPath>
+
+  <mask id="cartRimCutout" maskUnits="userSpaceOnUse" x="0" y="0" width="738" height="718">
+    <rect width="738" height="718" fill="white"/>
+    <path d="M182 216
+             C217 251 297 274 404 274
+             C511 274 591 251 623 216"
+          fill="none" stroke="black" stroke-width="12"
+          stroke-linecap="round"/>
+  </mask>
+
+</defs>
+<g mask="url(#cartRimCutout)">
+
+
+
+<!-- soft ground shadows -->
+<ellipse cx="405" cy="652" rx="128" ry="14" fill="#000" opacity=".10" filter="url(#soft)"/>
+
+<!-- handle -->
+<path d="M98 74
+         C86 73 78 81 78 94
+         C78 108 87 119 101 121
+         L180 132
+         C194 134 203 143 208 156
+         L222 193
+         L273 185
+         L251 126
+         C243 104 227 91 204 87Z"
+      fill="url(#handle)" filter="url(#shadow)"/>
+<path d="M92 78 C115 79 171 85 203 91 C221 94 235 105 243 120"
+      fill="none" stroke="#72787d" stroke-width="4" opacity=".28" stroke-linecap="round"/>
+
+<!-- upper basket -->
+<path d="M181 218 C207 190 283 176 404 176 C518 176 600 190 623 217
+         C620 258 604 315 570 365 C540 397 486 410 406 410
+         C326 410 271 397 241 366 C207 316 188 259 181 218Z"
+      fill="url(#basket)" filter="url(#shadow)"/>
+
+<!-- bowl interior -->
+<path d="M188 215
+         C228 187 304 176 404 176
+         C503 176 580 187 617 215
+         C584 248 508 269 404 269
+         C301 269 224 248 188 215Z"
+      fill="url(#inside)"/>
+
+<!-- facets -->
+<g clip-path="url(#topClip)">
+  <path d="M168 196 L249 186 L342 262 L240 365 L185 300Z"
+        fill="#c4ea38" opacity=".64"/>
+  <path d="M241 366 C322 345 390 305 475 254 L632 203 L587 352
+           C511 397 420 417 325 399Z"
+        fill="#45b23b" opacity=".36"/>
+  <path d="M238 190 L463 169 L590 190 L491 242 L343 262Z"
+        fill="#9edc36" opacity=".27"/>
+</g>
+<!-- lower basket -->
+<path d="M250 373
+         C291 391 343 399 405 399
+         C465 399 518 391 558 373
+         L529 486
+         C520 514 477 527 405 527
+         C335 527 293 513 282 486Z"
+      fill="url(#lower)" filter="url(#shadow)"/>
+
+<g clip-path="url(#lowerClip)">
+  <path d="M245 370 L375 400 L529 488 L344 536 L276 482Z"
+        fill="#8fd039" opacity=".43"/>
+  <path d="M294 499 C380 466 452 421 560 370 L533 500 L425 537Z"
+        fill="#26983d" opacity=".40"/>
+</g>
+
+<!-- dark seam -->
+<path d="M253 375 C293 392 344 400 405 400 C466 400 518 391 555 375"
+      fill="none" stroke="#176e35" stroke-width="11" opacity=".78" stroke-linecap="round"/>
+<path d="M262 379 C303 390 350 395 405 395 C459 395 505 390 545 379"
+      fill="none" stroke="#a8df40" stroke-width="4" opacity=".45" stroke-linecap="round"/>
+
+<!-- wheels -->
+<ellipse cx="325" cy="651" rx="52" ry="10" fill="#000" opacity=".10" filter="url(#soft)"/>
+<ellipse cx="488" cy="651" rx="52" ry="10" fill="#000" opacity=".10" filter="url(#soft)"/>
+<circle cx="325" cy="592" r="51" fill="url(#wheel)" filter="url(#shadow)"/>
+<circle cx="488" cy="592" r="51" fill="url(#wheel)" filter="url(#shadow)"/>
+<circle cx="308" cy="574" r="11" fill="#fff" opacity=".07"/>
+<circle cx="471" cy="574" r="11" fill="#fff" opacity=".07"/>
+
+
+</g>
+</svg>

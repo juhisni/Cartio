@@ -63,7 +63,7 @@ fun ShoppingListScreen(state: ShoppingListUiState, contentPadding: PaddingValues
     ) {
         item {
             Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp, bottom = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                Image(painterResource(R.drawable.cartio_logo), contentDescription = null, modifier = Modifier.size(38.dp))
+                Image(painterResource(R.drawable.cartio_foreground), contentDescription = null, modifier = Modifier.size(42.dp))
                 Text(LocalStrings.current.shoppingList, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f).padding(start = 10.dp))
                 IconButton(onClick = {}) { Icon(Icons.Outlined.MoreVert, contentDescription = null) }
             }
@@ -71,7 +71,7 @@ fun ShoppingListScreen(state: ShoppingListUiState, contentPadding: PaddingValues
         if (state.groupedItems.isEmpty()) item {
             Column(Modifier.fillParentMaxSize().padding(horizontal = 48.dp, vertical = 72.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
                 Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primary.copy(alpha = .08f), modifier = Modifier.size(110.dp)) {
-                    Box(contentAlignment = Alignment.Center) { Image(painterResource(R.drawable.cartio_logo), contentDescription = null, modifier = Modifier.size(88.dp)) }
+                    Box(contentAlignment = Alignment.Center) { Image(painterResource(R.drawable.cartio_foreground), contentDescription = null, modifier = Modifier.size(96.dp)) }
                 }
                 Spacer(Modifier.height(24.dp))
                 Text(LocalStrings.current.emptyTitle, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)

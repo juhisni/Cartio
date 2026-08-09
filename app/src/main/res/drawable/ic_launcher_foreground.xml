@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:gravity="center" android:width="82dp" android:height="82dp" android:drawable="@drawable/cartio_logo" />
+    <item android:gravity="center" android:width="88dp" android:height="86dp" android:drawable="@drawable/cartio_foreground" />
 </layer-list>
