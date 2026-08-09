@@ -35,6 +35,7 @@ data class ShoppingListUiState(
     val frequent: List<ProductSuggestion> = emptyList(),
     val activeList: ActiveShoppingList? = null,
     val savedLists: List<SavedShoppingList> = emptyList(),
+    val canAddQuery: Boolean = false,
 )
 
 @HiltViewModel
@@ -50,7 +51,18 @@ class ShoppingListViewModel @Inject constructor(private val repository: CartioRe
     }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
     private val listContext = combine(repository.items, repository.activeList, repository.savedLists) { items, active, saved -> Triple(items, active, saved) }
     val state: StateFlow<ShoppingListUiState> = combine(listContext, query, history, suggestions) { context, text, usage, matches ->
-        ShoppingListUiState(context.first.groupBy { it.category }, text, matches, usage.first, usage.second, context.second, context.third)
+        val existing = context.first.map { it.normalizedName }.toSet()
+        fun available(values: List<ProductSuggestion>) = values.filterNot { it.name.trim().lowercase() in existing }
+        ShoppingListUiState(
+            groupedItems = context.first.groupBy { it.category },
+            query = text,
+            suggestions = available(matches),
+            recent = available(usage.first),
+            frequent = available(usage.second),
+            activeList = context.second,
+            savedLists = context.third,
+            canAddQuery = text.isNotBlank() && text.trim().lowercase() !in existing,
+        )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ShoppingListUiState())
     private val feedbackChannel = Channel<String>(Channel.BUFFERED)
     val feedback = feedbackChannel.receiveAsFlow()
@@ -73,6 +85,27 @@ class ShoppingListViewModel @Inject constructor(private val repository: CartioRe
     }
     fun toggle(item: ShoppingItem) { viewModelScope.launch { repository.toggle(item) } }
     fun update(item: ShoppingItem) { viewModelScope.launch { repository.update(item) } }
+    fun moveItem(item: ShoppingItem, direction: Int) {
+        val ordered = state.value.groupedItems.values.flatten().toMutableList()
+        val from = ordered.indexOfFirst { it.id == item.id }
+        if (from < 0 || ordered.isEmpty()) return
+        val to = (from + direction).coerceIn(0, ordered.lastIndex)
+        if (from == to) return
+        val destinationCategory = ordered[to].category
+        val moved = ordered.removeAt(from).copy(category = destinationCategory)
+        ordered.add(to, moved)
+        viewModelScope.launch { repository.reorder(ordered) }
+    }
+    fun moveCategory(category: ProductCategory, direction: Int) {
+        val groups = state.value.groupedItems
+        val categories = groups.keys.toMutableList()
+        val from = categories.indexOf(category)
+        if (from < 0 || categories.isEmpty()) return
+        val to = (from + direction).coerceIn(0, categories.lastIndex)
+        if (from == to) return
+        categories.add(to, categories.removeAt(from))
+        viewModelScope.launch { repository.reorder(categories.flatMap { groups[it].orEmpty() }) }
+    }
     fun remove(item: ShoppingItem) { viewModelScope.launch { repository.remove(item.id); removalChannel.send(item) } }
     fun undoRemove(item: ShoppingItem) { viewModelScope.launch { repository.restoreItem(item) } }
     private fun refreshHistory() { viewModelScope.launch { history.value = repository.recent() to repository.frequent() } }

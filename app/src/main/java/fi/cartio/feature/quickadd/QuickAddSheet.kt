@@ -64,11 +64,13 @@ import fi.cartio.feature.shoppinglist.ShoppingListViewModel
                     SuggestionGroup(text.frequent, state.frequent, viewModel::add)
                 } else {
                     SuggestionGroup(text.addProduct, state.suggestions, viewModel::add)
-                    CustomProductAction(
-                        heading = text.productNotFound,
-                        action = text.addTypedProduct.format(state.query.trim()),
-                        onAdd = { viewModel.add() },
-                    )
+                    if (state.canAddQuery) {
+                        CustomProductAction(
+                            heading = text.productNotFound,
+                            action = text.addTypedProduct.format(state.query.trim()),
+                            onAdd = { viewModel.add() },
+                        )
+                    }
                 }
             }
             SnackbarHost(snackbar, Modifier.fillMaxWidth().padding(bottom = 8.dp))
@@ -98,5 +100,5 @@ import fi.cartio.feature.shoppinglist.ShoppingListViewModel
 @Composable private fun SuggestionGroup(title: String, values: List<ProductSuggestion>, onAdd: (String) -> Unit) {
     if (values.isEmpty()) return
     Text(title, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 18.dp, bottom = 6.dp))
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { values.distinctBy { it.name }.forEach { suggestion -> AssistChip(onClick = { onAdd(suggestion.name) }, shape = RoundedCornerShape(12.dp), colors = AssistChipDefaults.assistChipColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), label = { Text("${productIcon(suggestion.name, suggestion.category)}  ${suggestion.name}", maxLines = 2, overflow = TextOverflow.Ellipsis) }) } }
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { values.distinctBy { it.name }.forEach { suggestion -> AssistChip(onClick = { onAdd(suggestion.name) }, modifier = Modifier.testTag("suggestion_${suggestion.name.lowercase().replace(' ', '_')}"), shape = RoundedCornerShape(12.dp), colors = AssistChipDefaults.assistChipColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), label = { Text("${productIcon(suggestion.name, suggestion.category)}  ${suggestion.name}", maxLines = 2, overflow = TextOverflow.Ellipsis) }) } }
 }

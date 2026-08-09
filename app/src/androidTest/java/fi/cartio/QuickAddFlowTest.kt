@@ -8,6 +8,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Rule
 import org.junit.Test
+import org.junit.Assert.assertFalse
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
@@ -35,6 +36,10 @@ class QuickAddFlowTest {
         rule.onNodeWithTag("category_DAIRY").fetchSemanticsNode()
         rule.onNodeWithTag("product_maito").fetchSemanticsNode()
         rule.onNodeWithTag("quick_add_input").fetchSemanticsNode()
+        rule.onNodeWithTag("quick_add_input").performTextInput("maito")
+        rule.waitForIdle()
+        assertFalse(runCatching { rule.onNodeWithTag("suggestion_maito").fetchSemanticsNode() }.isSuccess)
+        assertFalse(runCatching { rule.onNodeWithTag("add_typed_product").fetchSemanticsNode() }.isSuccess)
     }
 
     @Test fun typedUnknownProductCanBeAddedWithExplicitButton() {

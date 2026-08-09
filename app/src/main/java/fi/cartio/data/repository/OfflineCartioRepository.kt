@@ -37,7 +37,8 @@ class OfflineCartioRepository @Inject constructor(private val dao: CartioDao, pr
         val normalized = engine.normalize(trimmed)
         val category = engine.suggest(trimmed)
         val now = System.currentTimeMillis()
-        val entity = ShoppingItemEntity(name = trimmed, normalizedName = normalized, quantity = null, unit = null, category = category, checked = false, createdAt = now, updatedAt = now)
+        dao.findItem(normalized)?.let { return it.model() }
+        val entity = ShoppingItemEntity(name = trimmed, normalizedName = normalized, quantity = null, unit = null, category = category, checked = false, createdAt = now, updatedAt = now, sortOrder = dao.nextSortOrder())
         val id = dao.insertItem(entity)
         val previous = dao.usage(normalized)
         dao.upsertUsage(ProductUsageEntity(normalized, trimmed, category, (previous?.useCount ?: 0) + 1, now))
@@ -47,12 +48,18 @@ class OfflineCartioRepository @Inject constructor(private val dao: CartioDao, pr
     override suspend fun toggle(item: ShoppingItem) { dao.updateItem(item.copy(checked = !item.checked, updatedAt = System.currentTimeMillis()).entity()); dao.syncCurrentToActiveList() }
     override suspend fun update(item: ShoppingItem) {
         val normalized = engine.normalize(item.name)
+        if (dao.findItem(normalized)?.id?.let { it != item.id } == true) return
         dao.updateItem(item.copy(normalizedName = normalized, updatedAt = System.currentTimeMillis()).entity())
         dao.learn(LearnedProductCategoryEntity(normalized, item.category))
         dao.syncCurrentToActiveList()
     }
+    override suspend fun reorder(items: List<ShoppingItem>) = dao.reorderCurrent(items.mapIndexed { index, item -> item.copy(sortOrder = index).entity() })
     override suspend fun remove(id: Long) { dao.deleteItem(id); dao.syncCurrentToActiveList() }
-    override suspend fun restoreItem(item: ShoppingItem) { dao.insertItem(item.entity()); dao.syncCurrentToActiveList() }
+    override suspend fun restoreItem(item: ShoppingItem) {
+        if (dao.findItem(item.normalizedName) != null) return
+        dao.insertItem(item.entity())
+        dao.syncCurrentToActiveList()
+    }
     override suspend fun save(name: String) { dao.saveCurrent(name.trim()) }
     override suspend fun restore(id: Long) = dao.activateSavedList(id)
     override suspend fun rename(id: Long, name: String) = dao.renameList(id, name.trim())
@@ -62,13 +69,13 @@ class OfflineCartioRepository @Inject constructor(private val dao: CartioDao, pr
         val items = deleted.items
         return SavedListSnapshot(
             SavedShoppingList(list.id, list.name, items.size, list.createdAt, items.count { it.checked }),
-            items.map { ShoppingItem(it.id, it.name, it.normalizedName, it.quantity, it.unit, it.category, it.checked) },
+            items.map { ShoppingItem(it.id, it.name, it.normalizedName, it.quantity, it.unit, it.category, it.checked, sortOrder = it.sortOrder) },
         )
     }
     override suspend fun restoreSaved(snapshot: SavedListSnapshot) {
         dao.restoreSavedList(
             SavedShoppingListEntity(snapshot.list.id, snapshot.list.name, snapshot.list.createdAt),
-            snapshot.items.map { SavedShoppingListItemEntity(id = it.id, listId = snapshot.list.id, name = it.name, normalizedName = it.normalizedName, quantity = it.quantity, unit = it.unit, category = it.category, checked = it.checked) },
+            snapshot.items.map { SavedShoppingListItemEntity(id = it.id, listId = snapshot.list.id, name = it.name, normalizedName = it.normalizedName, quantity = it.quantity, unit = it.unit, category = it.category, checked = it.checked, sortOrder = it.sortOrder) },
         )
     }
     override suspend fun learn(name: String, category: ProductCategory) = dao.learn(LearnedProductCategoryEntity(engine.normalize(name), category))
@@ -79,5 +86,5 @@ class OfflineCartioRepository @Inject constructor(private val dao: CartioDao, pr
     }
 }
 
-private fun ShoppingItemEntity.model() = ShoppingItem(id, name, normalizedName, quantity, unit, category, checked, createdAt, updatedAt)
-private fun ShoppingItem.entity() = ShoppingItemEntity(id, name, normalizedName, quantity, unit, category, checked, createdAt, updatedAt)
+private fun ShoppingItemEntity.model() = ShoppingItem(id, name, normalizedName, quantity, unit, category, checked, createdAt, updatedAt, sortOrder)
+private fun ShoppingItem.entity() = ShoppingItemEntity(id, name, normalizedName, quantity, unit, category, checked, createdAt, updatedAt, sortOrder)

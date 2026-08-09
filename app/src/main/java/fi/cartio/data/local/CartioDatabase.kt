@@ -13,7 +13,7 @@ class Converters {
     @TypeConverter fun category(value: ProductCategory) = value.name
 }
 
-@Database(entities = [ShoppingItemEntity::class, SavedShoppingListEntity::class, SavedShoppingListItemEntity::class, ActiveShoppingListEntity::class, LearnedProductCategoryEntity::class, ProductUsageEntity::class], version = 2, exportSchema = true)
+@Database(entities = [ShoppingItemEntity::class, SavedShoppingListEntity::class, SavedShoppingListItemEntity::class, ActiveShoppingListEntity::class, LearnedProductCategoryEntity::class, ProductUsageEntity::class], version = 3, exportSchema = true)
 @TypeConverters(Converters::class)
 abstract class CartioDatabase : RoomDatabase() {
     abstract fun dao(): CartioDao
@@ -25,6 +25,14 @@ abstract class CartioDatabase : RoomDatabase() {
                 db.execSQL("INSERT INTO `saved_lists` (`name`, `createdAt`) SELECT 'Shopping list', CAST(strftime('%s','now') AS INTEGER) * 1000 WHERE EXISTS (SELECT 1 FROM `shopping_items`)")
                 db.execSQL("INSERT INTO `active_list` (`singletonId`, `savedListId`, `name`, `createdAt`) SELECT 1, last_insert_rowid(), 'Shopping list', CAST(strftime('%s','now') AS INTEGER) * 1000 WHERE EXISTS (SELECT 1 FROM `shopping_items`)")
                 db.execSQL("INSERT INTO `saved_list_items` (`listId`, `name`, `normalizedName`, `quantity`, `unit`, `category`, `checked`) SELECT (SELECT `savedListId` FROM `active_list` WHERE `singletonId` = 1), `name`, `normalizedName`, `quantity`, `unit`, `category`, `checked` FROM `shopping_items` WHERE EXISTS (SELECT 1 FROM `active_list`)")
+            }
+        }
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `shopping_items` ADD COLUMN `sortOrder` INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE `saved_list_items` ADD COLUMN `sortOrder` INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("UPDATE `shopping_items` SET `sortOrder` = `id`")
+                db.execSQL("UPDATE `saved_list_items` SET `sortOrder` = `id`")
             }
         }
     }

@@ -10,9 +10,12 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface CartioDao {
-    @Query("SELECT * FROM shopping_items ORDER BY checked, createdAt") fun observeItems(): Flow<List<ShoppingItemEntity>>
+    @Query("SELECT * FROM shopping_items ORDER BY sortOrder, id") fun observeItems(): Flow<List<ShoppingItemEntity>>
     @Insert suspend fun insertItem(item: ShoppingItemEntity): Long
     @Update suspend fun updateItem(item: ShoppingItemEntity)
+    @Update suspend fun updateItems(items: List<ShoppingItemEntity>)
+    @Query("SELECT * FROM shopping_items WHERE normalizedName = :normalizedName LIMIT 1") suspend fun findItem(normalizedName: String): ShoppingItemEntity?
+    @Query("SELECT COALESCE(MAX(sortOrder), -1) + 1 FROM shopping_items") suspend fun nextSortOrder(): Int
     @Query("DELETE FROM shopping_items WHERE id = :id") suspend fun deleteItem(id: Long)
     @Query("DELETE FROM shopping_items") suspend fun clearItems()
     @Query("SELECT * FROM shopping_items") suspend fun getItems(): List<ShoppingItemEntity>
@@ -50,7 +53,7 @@ interface CartioDao {
 
     @Transaction suspend fun saveCurrent(name: String): Long {
         val id = insertSavedList(SavedShoppingListEntity(name = name, createdAt = System.currentTimeMillis()))
-        insertSavedItems(getItems().map { SavedShoppingListItemEntity(listId = id, name = it.name, normalizedName = it.normalizedName, quantity = it.quantity, unit = it.unit, category = it.category, checked = it.checked) })
+        insertSavedItems(getItems().map { SavedShoppingListItemEntity(listId = id, name = it.name, normalizedName = it.normalizedName, quantity = it.quantity, unit = it.unit, category = it.category, checked = it.checked, sortOrder = it.sortOrder) })
         return id
     }
 
@@ -61,7 +64,7 @@ interface CartioDao {
     @Transaction suspend fun syncCurrentToActiveList() {
         val active = getActiveList() ?: return
         deleteSavedItems(active.savedListId)
-        insertSavedItems(getItems().map { SavedShoppingListItemEntity(listId = active.savedListId, name = it.name, normalizedName = it.normalizedName, quantity = it.quantity, unit = it.unit, category = it.category, checked = it.checked) })
+        insertSavedItems(getItems().map { SavedShoppingListItemEntity(listId = active.savedListId, name = it.name, normalizedName = it.normalizedName, quantity = it.quantity, unit = it.unit, category = it.category, checked = it.checked, sortOrder = it.sortOrder) })
     }
 
     @Transaction suspend fun createAndActivateList(name: String): Long {
@@ -78,7 +81,7 @@ interface CartioDao {
         syncCurrentToActiveList()
         clearItems()
         val now = System.currentTimeMillis()
-        getSavedItems(id).forEach { insertItem(ShoppingItemEntity(name = it.name, normalizedName = it.normalizedName, quantity = it.quantity, unit = it.unit, category = it.category, checked = it.checked, createdAt = now, updatedAt = now)) }
+        getSavedItems(id).forEach { insertItem(ShoppingItemEntity(name = it.name, normalizedName = it.normalizedName, quantity = it.quantity, unit = it.unit, category = it.category, checked = it.checked, createdAt = now, updatedAt = now, sortOrder = it.sortOrder)) }
         upsertActiveList(ActiveShoppingListEntity(savedListId = id, name = list.name, createdAt = list.createdAt))
     }
 
@@ -101,5 +104,10 @@ interface CartioDao {
     @Transaction suspend fun renameList(id: Long, name: String) {
         renameSavedList(id, name)
         getActiveList()?.takeIf { it.savedListId == id }?.let { upsertActiveList(it.copy(name = name)) }
+    }
+
+    @Transaction suspend fun reorderCurrent(items: List<ShoppingItemEntity>) {
+        updateItems(items)
+        syncCurrentToActiveList()
     }
 }

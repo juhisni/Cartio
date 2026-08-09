@@ -69,6 +69,7 @@ private class SavedListsFakeRepository : CartioRepository {
     override suspend fun add(name: String) = error("Not used")
     override suspend fun toggle(item: ShoppingItem) = Unit
     override suspend fun update(item: ShoppingItem) = Unit
+    override suspend fun reorder(items: List<ShoppingItem>) = Unit
     override suspend fun remove(id: Long) = Unit
     override suspend fun restoreItem(item: ShoppingItem) = Unit
     override suspend fun save(name: String) = Unit

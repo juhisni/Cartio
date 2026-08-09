@@ -91,4 +91,14 @@ class CartioDatabaseTest {
         assertEquals(emptyList<ProductSuggestion>(), repository.dictionarySuggestions("egg", AppLanguage.FINNISH))
         assertEquals(emptyList<ProductSuggestion>(), repository.dictionarySuggestions("jauhe", AppLanguage.ENGLISH))
     }
+    @Test fun repositoryDoesNotAddTheSameProductTwice() = runTest {
+        val engine = OfflineCategorySuggestionEngine(db.dao(), BundledProductCatalog(context))
+        val repository = OfflineCartioRepository(db.dao(), engine)
+        db.dao().createAndActivateList("Duplicates")
+
+        repository.add("Milk")
+        repository.add("milk")
+
+        assertEquals(1, repository.items.first().size)
+    }
 }

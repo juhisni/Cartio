@@ -14,6 +14,7 @@ data class ShoppingItem(
     val checked: Boolean = false,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
+    val sortOrder: Int = 0,
 )
 
 data class SavedShoppingList(val id: Long, val name: String, val itemCount: Int, val createdAt: Long, val completedCount: Int = 0)

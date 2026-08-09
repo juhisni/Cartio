@@ -63,8 +63,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextAlign
@@ -89,6 +95,7 @@ import fi.cartio.core.model.SavedShoppingList
 import fi.cartio.core.model.formatQuantity
 import fi.cartio.ui.theme.CartioTheme
 import fi.cartio.R
+import kotlin.math.abs
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -111,6 +118,8 @@ fun ShoppingListRoute(viewModel: ShoppingListViewModel, contentPadding: PaddingV
             onCreateList = { creatingList = true },
             onOpenSavedLists = onOpenSavedLists,
             onSwitchList = { switchingList = true },
+            onMoveItem = viewModel::moveItem,
+            onMoveCategory = viewModel::moveCategory,
         )
         SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).padding(bottom = contentPadding.calculateBottomPadding() + 76.dp))
     }
@@ -136,6 +145,8 @@ fun ShoppingListScreen(
     onCreateList: () -> Unit = {},
     onOpenSavedLists: () -> Unit = {},
     onSwitchList: () -> Unit = {},
+    onMoveItem: (ShoppingItem, Int) -> Unit = { _, _ -> },
+    onMoveCategory: (ProductCategory, Int) -> Unit = { _, _ -> },
 ) {
     var collapsedCategories by rememberSaveable { mutableStateOf(emptySet<String>()) }
     LazyColumn(
@@ -158,16 +169,15 @@ fun ShoppingListScreen(
                 Text(LocalStrings.current.emptyBody, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.fillMaxWidth().padding(top = 10.dp), style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Center)
             }
         }
-        if (state.activeList != null) ProductCategory.entries.forEach { category ->
-            val products = state.groupedItems[category].orEmpty()
+        if (state.activeList != null) state.groupedItems.forEach { (category, products) ->
             if (products.isNotEmpty()) {
                 val collapsed = category.name in collapsedCategories
                 item(key = "header-$category") {
-                    CategoryHeader(category, products.count { !it.checked }, collapsed) {
+                    CategoryHeader(category, products.count { !it.checked }, collapsed, onToggle = {
                         collapsedCategories = if (collapsed) collapsedCategories - category.name else collapsedCategories + category.name
-                    }
+                    }, onMove = { onMoveCategory(category, it) })
                 }
-                if (!collapsed) items(products, key = { it.id }) { product -> ProductRow(product, onToggle, onRemove, onEdit) }
+                if (!collapsed) items(products, key = { it.id }) { product -> ProductRow(product, onToggle, onRemove, onEdit) { direction -> onMoveItem(product, direction) } }
             }
         }
     }
@@ -257,11 +267,11 @@ private fun SwitchListSheet(active: ActiveShoppingList?, lists: List<SavedShoppi
 }
 
 @Composable
-private fun CategoryHeader(category: ProductCategory, count: Int, collapsed: Boolean, onToggle: () -> Unit) {
+private fun CategoryHeader(category: ProductCategory, count: Int, collapsed: Boolean, onToggle: () -> Unit, onMove: (Int) -> Unit) {
     val tint = categoryTint(category)
     val strings = LocalStrings.current
     Row(
-        Modifier.fillMaxWidth().testTag("category_${category.name}").background(tint.copy(alpha = .07f)).clickable(role = Role.Button, onClickLabel = if (collapsed) strings.expandCategory else strings.collapseCategory, onClick = onToggle).padding(start = 20.dp, end = 12.dp),
+        Modifier.fillMaxWidth().testTag("category_${category.name}").reorderable(onMove).background(tint.copy(alpha = .07f)).clickable(role = Role.Button, onClickLabel = if (collapsed) strings.expandCategory else strings.collapseCategory, onClick = onToggle).padding(start = 20.dp, end = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(categoryIcon(category), modifier = Modifier.padding(end = 9.dp, top = 12.dp, bottom = 12.dp))
@@ -272,10 +282,10 @@ private fun CategoryHeader(category: ProductCategory, count: Int, collapsed: Boo
 }
 
 @Composable
-private fun ProductRow(product: ShoppingItem, onToggle: (ShoppingItem) -> Unit, onRemove: (ShoppingItem) -> Unit, onEdit: (ShoppingItem) -> Unit) {
+private fun ProductRow(product: ShoppingItem, onToggle: (ShoppingItem) -> Unit, onRemove: (ShoppingItem) -> Unit, onEdit: (ShoppingItem) -> Unit, onMove: (Int) -> Unit) {
     var menuExpanded by remember { mutableStateOf(false) }
     Row(
-        Modifier.fillMaxWidth().testTag("product_${product.normalizedName}").clickable(role = Role.Checkbox) { onToggle(product) }.alpha(if (product.checked) .58f else 1f).padding(start = 20.dp, end = 4.dp, top = 5.dp, bottom = 5.dp),
+        Modifier.fillMaxWidth().testTag("product_${product.normalizedName}").reorderable(onMove).clickable(role = Role.Checkbox) { onToggle(product) }.alpha(if (product.checked) .58f else 1f).padding(start = 20.dp, end = 4.dp, top = 5.dp, bottom = 5.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(productIcon(product.name, product.category), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(end = 12.dp))
@@ -295,6 +305,33 @@ private fun ProductRow(product: ShoppingItem, onToggle: (ShoppingItem) -> Unit, 
             }
         }
     }
+}
+
+@Composable
+private fun Modifier.reorderable(onMove: (Int) -> Unit): Modifier {
+    val threshold = with(LocalDensity.current) { 44.dp.toPx() }
+    var distance by remember { mutableStateOf(0f) }
+    val strings = LocalStrings.current
+    return this
+        .pointerInput(onMove, threshold) {
+            detectDragGesturesAfterLongPress(
+                onDragEnd = { distance = 0f },
+                onDragCancel = { distance = 0f },
+            ) { change, dragAmount ->
+                change.consume()
+                distance += dragAmount.y
+                if (abs(distance) >= threshold) {
+                    onMove(if (distance > 0) 1 else -1)
+                    distance = 0f
+                }
+            }
+        }
+        .semantics {
+            customActions = listOf(
+                CustomAccessibilityAction(strings.moveUp) { onMove(-1); true },
+                CustomAccessibilityAction(strings.moveDown) { onMove(1); true },
+            )
+        }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

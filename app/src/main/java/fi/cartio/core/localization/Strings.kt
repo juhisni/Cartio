@@ -23,6 +23,7 @@ data class CartioStrings(
     val whatWouldYouLike: String, val createNewList: String, val openSavedLists: String, val listsStayOnDevice: String,
     val createList: String, val currentList: String, val listProgress: String, val switchList: String,
     val active: String, val manageSavedLists: String,
+    val reorder: String, val moveUp: String, val moveDown: String,
 )
 
 val LocalStrings = staticCompositionLocalOf { strings(AppLanguage.ENGLISH) }
@@ -34,7 +35,7 @@ fun strings(language: AppLanguage) = if (language == AppLanguage.FINNISH) Cartio
     "Muokkaa tuotetta", "Tuotteen nimi", "Määrä", "Yksikkö", "Kategoria", "poistettu", "Kumoa", "Laajenna kategoria", "Tiivistä kategoria",
     "Hae listoja", "Hakua vastaavia listoja ei löytynyt", "Tuoteluettelo: Fineli / THL, CC BY 4.0", "Lisää ”%s” listalle", "Etkö löytänyt etsimääsi tuotetta?",
     "Ei tallennettuja listoja", "Tallenna usein käyttämäsi ostoslista, niin saat sen myöhemmin käyttöön yhdellä napautuksella.", "%d tuotetta", "Lisää toimintoja", "Nopea, rauhallinen ja täysin offline.",
-    "Mitä haluaisit tehdä?", "Luo uusi lista", "Avaa tallennetut listat", "Listasi säilyvät tällä laitteella", "Luo lista", "NYKYINEN LISTA", "%d tuotetta · %d valmiina", "Vaihda listaa", "Käytössä", "Hallitse tallennettuja listoja"
+    "Mitä haluaisit tehdä?", "Luo uusi lista", "Avaa tallennetut listat", "Listasi säilyvät tällä laitteella", "Luo lista", "NYKYINEN LISTA", "%d tuotetta · %d valmiina", "Vaihda listaa", "Käytössä", "Hallitse tallennettuja listoja", "Järjestä vetämällä", "Siirrä ylös", "Siirrä alas"
 ) else CartioStrings(
     "Shopping list", "Main", "Saved", "Settings", "Add product", "Search or type a product",
     "Recently added", "Frequently added", "Your list is empty", "Add your first product quickly with the plus button.",
@@ -43,7 +44,7 @@ fun strings(language: AppLanguage) = if (language == AppLanguage.FINNISH) Cartio
     "Edit product", "Product name", "Quantity", "Unit", "Category", "removed", "Undo", "Expand category", "Collapse category",
     "Search lists", "No matching lists found", "Product catalog: Fineli / THL, CC BY 4.0", "Add “%s” to list", "Didn't find the product you were looking for?",
     "No saved lists", "Save a shopping list you use often and restore it later with one tap.", "%d items", "More options", "Fast, calm, and completely offline.",
-    "What would you like to do?", "Create new list", "Open saved lists", "Your lists stay on this device", "Create list", "CURRENT LIST", "%d items · %d completed", "Switch list", "Active", "Manage saved lists"
+    "What would you like to do?", "Create new list", "Open saved lists", "Your lists stay on this device", "Create list", "CURRENT LIST", "%d items · %d completed", "Switch list", "Active", "Manage saved lists", "Drag to reorder", "Move up", "Move down"
 )
 
 @Composable fun categoryName(category: ProductCategory): String {
