@@ -30,6 +30,11 @@ class OfflineCartioRepository @Inject constructor(private val dao: CartioDao, pr
         return entity.copy(id = id).model()
     }
     override suspend fun toggle(item: ShoppingItem) = dao.updateItem(item.copy(checked = !item.checked, updatedAt = System.currentTimeMillis()).entity())
+    override suspend fun update(item: ShoppingItem) {
+        val normalized = engine.normalize(item.name)
+        dao.updateItem(item.copy(normalizedName = normalized, updatedAt = System.currentTimeMillis()).entity())
+        dao.learn(LearnedProductCategoryEntity(normalized, item.category))
+    }
     override suspend fun remove(id: Long) = dao.deleteItem(id)
     override suspend fun save(name: String) { dao.saveCurrent(name.trim()) }
     override suspend fun restore(id: Long) = dao.restore(id)

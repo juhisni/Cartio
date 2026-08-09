@@ -34,6 +34,18 @@ class ShoppingListViewModelTest {
         assertEquals("", viewModel.state.value.query)
         assertEquals("Maito", viewModel.state.value.groupedItems[ProductCategory.DAIRY]?.single()?.name)
     }
+
+    @Test fun updatingProductMovesItToSelectedCategory() = runTest(dispatcher) {
+        val repository = FakeRepository(); val viewModel = ShoppingListViewModel(repository)
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.state.collect {} }
+        viewModel.add("maito"); advanceUntilIdle()
+        val item = viewModel.state.value.groupedItems[ProductCategory.DAIRY]!!.single()
+        viewModel.update(item.copy(name = "Kauramaito", quantity = 2.0, unit = "l", category = ProductCategory.DRINKS)); advanceUntilIdle()
+        val updated = viewModel.state.value.groupedItems[ProductCategory.DRINKS]!!.single()
+        assertEquals("Kauramaito", updated.name)
+        assertEquals(2.0, updated.quantity!!, 0.0)
+        assertEquals("l", updated.unit)
+    }
 }
 
 private class FakeRepository : CartioRepository {
@@ -42,6 +54,7 @@ private class FakeRepository : CartioRepository {
     override val savedLists = MutableStateFlow<List<SavedShoppingList>>(emptyList())
     override suspend fun add(name: String): ShoppingItem = ShoppingItem(1, name.replaceFirstChar { it.uppercase() }, name.lowercase(), category = ProductCategory.DAIRY).also { mutableItems.value = listOf(it) }
     override suspend fun toggle(item: ShoppingItem) { mutableItems.value = listOf(item.copy(checked = !item.checked)) }
+    override suspend fun update(item: ShoppingItem) { mutableItems.value = listOf(item) }
     override suspend fun remove(id: Long) { mutableItems.value = emptyList() }
     override suspend fun save(name: String) = Unit; override suspend fun restore(id: Long) = Unit; override suspend fun rename(id: Long, name: String) = Unit; override suspend fun deleteSaved(id: Long) = Unit
     override suspend fun learn(name: String, category: ProductCategory) = Unit

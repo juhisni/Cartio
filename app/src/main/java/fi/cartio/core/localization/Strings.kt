@@ -12,6 +12,7 @@ data class CartioStrings(
     val restore: String, val rename: String, val delete: String, val language: String,
     val theme: String, val appInfo: String, val light: String, val dark: String, val system: String,
     val finnish: String, val english: String, val cancel: String, val save: String, val added: String,
+    val editProduct: String, val productName: String, val quantity: String, val unit: String, val category: String,
 )
 
 val LocalStrings = staticCompositionLocalOf { strings(AppLanguage.FINNISH) }
@@ -19,12 +20,14 @@ fun strings(language: AppLanguage) = if (language == AppLanguage.FINNISH) Cartio
     "Ostoslista", "Päänäkymä", "Tallennetut", "Asetukset", "Lisää tuote", "Hae tai kirjoita tuote",
     "Viimeksi lisätyt", "Usein lisätyt", "Lista on vielä tyhjä", "Lisää ensimmäinen tuote nopeasti plus-painikkeesta.",
     "Tallenna lista", "Listan nimi", "Ota käyttöön", "Nimeä uudelleen", "Poista", "Kieli / Language", "Teema", "Tietoja sovelluksesta",
-    "Vaalea", "Tumma", "Järjestelmän mukaan", "Suomi", "English", "Peruuta", "Tallenna", "lisätty"
+    "Vaalea", "Tumma", "Järjestelmän mukaan", "Suomi", "English", "Peruuta", "Tallenna", "lisätty",
+    "Muokkaa tuotetta", "Tuotteen nimi", "Määrä", "Yksikkö", "Kategoria"
 ) else CartioStrings(
     "Shopping list", "Main", "Saved", "Settings", "Add product", "Search or type a product",
     "Recently added", "Frequently added", "Your list is empty", "Add your first product quickly with the plus button.",
     "Save list", "List name", "Use list", "Rename", "Delete", "Language", "Theme", "About Cartio",
-    "Light", "Dark", "System default", "Finnish", "English", "Cancel", "Save", "added"
+    "Light", "Dark", "System default", "Finnish", "English", "Cancel", "Save", "added",
+    "Edit product", "Product name", "Quantity", "Unit", "Category"
 )
 
 @Composable fun categoryName(category: ProductCategory): String {

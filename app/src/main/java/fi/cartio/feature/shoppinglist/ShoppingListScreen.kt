@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -20,16 +21,25 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.DeleteOutline
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.foundation.Image
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -39,6 +49,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -49,14 +62,17 @@ import fi.cartio.core.model.ShoppingItem
 import fi.cartio.ui.theme.CartioTheme
 import fi.cartio.R
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ShoppingListRoute(viewModel: ShoppingListViewModel, contentPadding: PaddingValues) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    ShoppingListScreen(state, contentPadding, viewModel::toggle, viewModel::remove)
+    var editing by remember { mutableStateOf<ShoppingItem?>(null) }
+    ShoppingListScreen(state, contentPadding, viewModel::toggle, viewModel::remove, onEdit = { editing = it })
+    editing?.let { item -> ProductEditorSheet(item, onDismiss = { editing = null }, onSave = { viewModel.update(it); editing = null }) }
 }
 
 @Composable
-fun ShoppingListScreen(state: ShoppingListUiState, contentPadding: PaddingValues, onToggle: (ShoppingItem) -> Unit, onRemove: (ShoppingItem) -> Unit) {
+fun ShoppingListScreen(state: ShoppingListUiState, contentPadding: PaddingValues, onToggle: (ShoppingItem) -> Unit, onRemove: (ShoppingItem) -> Unit, onEdit: (ShoppingItem) -> Unit = {}) {
     LazyColumn(
         modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).animateContentSize(),
         contentPadding = PaddingValues(top = contentPadding.calculateTopPadding() + 8.dp, bottom = contentPadding.calculateBottomPadding() + 92.dp),
@@ -82,7 +98,7 @@ fun ShoppingListScreen(state: ShoppingListUiState, contentPadding: PaddingValues
             val products = state.groupedItems[category].orEmpty()
             if (products.isNotEmpty()) {
                 item(key = "header-$category") { CategoryHeader(category, products.count { !it.checked }) }
-                items(products, key = { it.id }) { product -> ProductRow(product, onToggle, onRemove) }
+                items(products, key = { it.id }) { product -> ProductRow(product, onToggle, onRemove, onEdit) }
             }
         }
     }
@@ -102,7 +118,7 @@ private fun CategoryHeader(category: ProductCategory, count: Int) {
 }
 
 @Composable
-private fun ProductRow(product: ShoppingItem, onToggle: (ShoppingItem) -> Unit, onRemove: (ShoppingItem) -> Unit) {
+private fun ProductRow(product: ShoppingItem, onToggle: (ShoppingItem) -> Unit, onRemove: (ShoppingItem) -> Unit, onEdit: (ShoppingItem) -> Unit) {
     Row(
         Modifier.fillMaxWidth().testTag("product_${product.normalizedName}").clickable(role = Role.Checkbox) { onToggle(product) }.alpha(if (product.checked) .58f else 1f).padding(start = 20.dp, end = 8.dp, top = 5.dp, bottom = 5.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -114,7 +130,33 @@ private fun ProductRow(product: ShoppingItem, onToggle: (ShoppingItem) -> Unit, 
             Modifier.size(26.dp).background(if (product.checked) MaterialTheme.colorScheme.primary else Color.Transparent, CircleShape).border(1.5.dp, if (product.checked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, CircleShape).clickable(role = Role.Checkbox) { onToggle(product) },
             contentAlignment = Alignment.Center,
         ) { Text(if (product.checked) "✓" else "", color = Color.White, fontWeight = FontWeight.Bold) }
+        IconButton(onClick = { onEdit(product) }) { Icon(Icons.Outlined.Edit, contentDescription = LocalStrings.current.editProduct, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
         IconButton(onClick = { onRemove(product) }) { Icon(Icons.Outlined.DeleteOutline, contentDescription = LocalStrings.current.delete, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ProductEditorSheet(item: ShoppingItem, onDismiss: () -> Unit, onSave: (ShoppingItem) -> Unit) {
+    var name by remember(item.id) { mutableStateOf(item.name) }
+    var quantity by remember(item.id) { mutableStateOf(item.quantity?.let { if (it % 1.0 == 0.0) it.toInt().toString() else it.toString() }.orEmpty()) }
+    var unit by remember(item.id) { mutableStateOf(item.unit.orEmpty()) }
+    var category by remember(item.id) { mutableStateOf(item.category) }
+    val strings = LocalStrings.current
+    ModalBottomSheet(onDismissRequest = onDismiss, shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(bottom = 28.dp)) {
+            Text(strings.editProduct, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 16.dp))
+            OutlinedTextField(name, { name = it }, label = { Text(strings.productName) }, singleLine = true, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth())
+            Row(Modifier.fillMaxWidth().padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedTextField(quantity, { value -> quantity = value.filter { it.isDigit() || it == '.' || it == ',' } }, label = { Text(strings.quantity) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), shape = RoundedCornerShape(14.dp), modifier = Modifier.weight(1f))
+                OutlinedTextField(unit, { unit = it }, label = { Text(strings.unit) }, singleLine = true, shape = RoundedCornerShape(14.dp), modifier = Modifier.weight(1f))
+            }
+            Text(strings.category, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 18.dp, bottom = 6.dp))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                ProductCategory.entries.forEach { option -> FilterChip(selected = category == option, onClick = { category = option }, label = { Text(categoryName(option)) }) }
+            }
+            Button(onClick = { onSave(item.copy(name = name.trim(), quantity = quantity.replace(',', '.').toDoubleOrNull(), unit = unit.trim().ifBlank { null }, category = category)) }, enabled = name.isNotBlank(), shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth().padding(top = 20.dp).height(52.dp)) { Text(strings.save) }
+        }
     }
 }
 

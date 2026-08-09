@@ -47,6 +47,7 @@ class ShoppingListViewModel @Inject constructor(private val repository: CartioRe
         }
     }
     fun toggle(item: ShoppingItem) { viewModelScope.launch { repository.toggle(item) } }
+    fun update(item: ShoppingItem) { viewModelScope.launch { repository.update(item) } }
     fun remove(item: ShoppingItem) { viewModelScope.launch { repository.remove(item.id) } }
     private fun refreshHistory() { viewModelScope.launch { history.value = repository.recent() to repository.frequent() } }
 }
