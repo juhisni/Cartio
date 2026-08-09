@@ -18,9 +18,22 @@ class PolishedNavigationTest {
 
         rule.onNodeWithText("Saved").performClick()
         rule.onNodeWithText("No saved lists").assertIsDisplayed()
+        rule.onNodeWithTag("saved_create_new_list").assertIsDisplayed()
 
         rule.onNodeWithText("Settings").performClick()
         rule.onNodeWithText("Fast, calm, and completely offline.").assertIsDisplayed()
+    }
+
+    @Test fun mainNavigationReturnsFromSavedListsOpenedFromStartScreen() {
+        rule.mainClock.advanceTimeBy(2_500)
+        rule.waitForIdle()
+
+        rule.onNodeWithText("Open saved lists").performClick()
+        rule.onNodeWithText("No saved lists").assertIsDisplayed()
+        rule.onNodeWithText("Main").performClick()
+
+        rule.onNodeWithText("What would you like to do?").assertIsDisplayed()
+        rule.onNodeWithTag("create_new_list").assertIsDisplayed()
     }
 
     @Test fun aNamedListCanBeCreatedFromTheStartScreen() {

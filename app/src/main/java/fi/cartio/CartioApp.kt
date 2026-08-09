@@ -104,7 +104,7 @@ fun CartioApp(
                     NavigationBar(modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars), containerColor = MaterialTheme.colorScheme.surface, tonalElevation = 0.dp) {
                         Destination.entries.forEach { destination ->
                             val label = when (destination) { Destination.Main -> labels.main; Destination.Saved -> labels.saved; Destination.Settings -> labels.settings }
-                            NavigationBarItem(selected = current == destination.route, onClick = { nav.navigate(destination.route) { popUpTo(nav.graph.findStartDestination().id) { saveState = true }; launchSingleTop = true; restoreState = true } }, icon = { Icon(destination.icon, contentDescription = label) }, label = { Text(label, style = MaterialTheme.typography.labelSmall, maxLines = 1, overflow = TextOverflow.Ellipsis) }, colors = NavigationBarItemDefaults.colors(selectedIconColor = MaterialTheme.colorScheme.primary, selectedTextColor = MaterialTheme.colorScheme.primary, indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = .12f)))
+                            NavigationBarItem(selected = current == destination.route, onClick = { nav.navigate(destination.route) { popUpTo(nav.graph.findStartDestination().id); launchSingleTop = true } }, icon = { Icon(destination.icon, contentDescription = label) }, label = { Text(label, style = MaterialTheme.typography.labelSmall, maxLines = 1, overflow = TextOverflow.Ellipsis) }, colors = NavigationBarItemDefaults.colors(selectedIconColor = MaterialTheme.colorScheme.primary, selectedTextColor = MaterialTheme.colorScheme.primary, indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = .12f)))
                         }
                     }
                 },

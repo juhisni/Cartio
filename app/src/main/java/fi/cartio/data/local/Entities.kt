@@ -12,6 +12,14 @@ data class ShoppingItemEntity(@PrimaryKey(autoGenerate = true) val id: Long = 0,
 @Entity(tableName = "saved_lists")
 data class SavedShoppingListEntity(@PrimaryKey(autoGenerate = true) val id: Long = 0, val name: String, val createdAt: Long)
 
+data class SavedShoppingListSummary(
+    val id: Long,
+    val name: String,
+    val createdAt: Long,
+    val itemCount: Int,
+    val completedCount: Int,
+)
+
 @Entity(tableName = "active_list")
 data class ActiveShoppingListEntity(
     @PrimaryKey val singletonId: Int = 1,

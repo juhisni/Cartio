@@ -22,7 +22,9 @@ import javax.inject.Inject
 
 class OfflineCartioRepository @Inject constructor(private val dao: CartioDao, private val engine: CategorySuggestionEngine) : CartioRepository {
     override val items: Flow<List<ShoppingItem>> = dao.observeItems().map { list -> list.map { it.model() } }
-    override val savedLists: Flow<List<SavedShoppingList>> = dao.observeSavedLists().map { lists -> lists.map { SavedShoppingList(it.id, it.name, dao.savedItemCount(it.id), it.createdAt) } }
+    override val savedLists: Flow<List<SavedShoppingList>> = dao.observeSavedLists().map { lists ->
+        lists.map { SavedShoppingList(it.id, it.name, it.itemCount, it.createdAt, it.completedCount) }
+    }
     override val activeList: Flow<ActiveShoppingList?> = combine(dao.observeActiveList(), items) { active, currentItems ->
         active?.let { ActiveShoppingList(it.savedListId, it.name, currentItems.size, currentItems.count(ShoppingItem::checked)) }
     }
@@ -59,7 +61,7 @@ class OfflineCartioRepository @Inject constructor(private val dao: CartioDao, pr
         val list = deleted.list
         val items = deleted.items
         return SavedListSnapshot(
-            SavedShoppingList(list.id, list.name, items.size, list.createdAt),
+            SavedShoppingList(list.id, list.name, items.size, list.createdAt, items.count { it.checked }),
             items.map { ShoppingItem(it.id, it.name, it.normalizedName, it.quantity, it.unit, it.category, it.checked) },
         )
     }

@@ -242,7 +242,9 @@ private fun SwitchListSheet(active: ActiveShoppingList?, lists: List<SavedShoppi
                     Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
                             Text(list.name, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            Text(strings.itemCount.format(if (selected) active.itemCount else list.itemCount), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            val itemCount = if (selected) active.itemCount else list.itemCount
+                            val completedCount = if (selected) active.completedCount else list.completedCount
+                            Text(strings.listProgress.format(itemCount, completedCount), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         if (selected) Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surface) { Text(strings.active, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp)) }
                     }

@@ -17,7 +17,16 @@ interface CartioDao {
     @Query("DELETE FROM shopping_items") suspend fun clearItems()
     @Query("SELECT * FROM shopping_items") suspend fun getItems(): List<ShoppingItemEntity>
 
-    @Query("SELECT * FROM saved_lists ORDER BY createdAt DESC") fun observeSavedLists(): Flow<List<SavedShoppingListEntity>>
+    @Query(
+        """SELECT lists.id, lists.name, lists.createdAt,
+            COUNT(items.id) AS itemCount,
+            COALESCE(SUM(CASE WHEN items.checked = 1 THEN 1 ELSE 0 END), 0) AS completedCount
+            FROM saved_lists AS lists
+            LEFT JOIN saved_list_items AS items ON items.listId = lists.id
+            GROUP BY lists.id, lists.name, lists.createdAt
+            ORDER BY lists.createdAt DESC""",
+    )
+    fun observeSavedLists(): Flow<List<SavedShoppingListSummary>>
     @Query("SELECT * FROM saved_lists WHERE id = :id") suspend fun getSavedList(id: Long): SavedShoppingListEntity?
     @Query("SELECT COUNT(*) FROM saved_list_items WHERE listId = :id") suspend fun savedItemCount(id: Long): Int
     @Insert suspend fun insertSavedList(list: SavedShoppingListEntity): Long

@@ -58,6 +58,15 @@ class CartioDatabaseTest {
             ),
         )
         dao.syncCurrentToActiveList()
+        var weekly = dao.observeSavedLists().first().single()
+        assertEquals(1, weekly.itemCount)
+        assertEquals(0, weekly.completedCount)
+
+        val milk = dao.observeItems().first().single()
+        dao.updateItem(milk.copy(checked = true))
+        dao.syncCurrentToActiveList()
+        weekly = dao.observeSavedLists().first().single()
+        assertEquals(1, weekly.completedCount)
 
         val partyId = dao.createAndActivateList("Party")
         assertEquals(0, dao.observeItems().first().size)
