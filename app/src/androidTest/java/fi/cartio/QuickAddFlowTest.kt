@@ -14,6 +14,8 @@ import org.junit.runner.RunWith
 class QuickAddFlowTest {
     @get:Rule val rule = createAndroidComposeRule<MainActivity>()
     @Test fun addMilkAndKeepSheetOpen() {
+        rule.mainClock.advanceTimeBy(2_500)
+        rule.waitForIdle()
         rule.onNodeWithTag("open_quick_add").performClick()
         rule.onNodeWithTag("quick_add_input").performTextInput("maito")
         rule.onNodeWithTag("quick_add_input").performImeAction()

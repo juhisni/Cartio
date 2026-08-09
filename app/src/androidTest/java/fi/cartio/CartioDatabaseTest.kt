@@ -9,6 +9,7 @@ import fi.cartio.data.local.CartioDatabase
 import fi.cartio.data.local.LearnedProductCategoryEntity
 import fi.cartio.data.local.ShoppingItemEntity
 import fi.cartio.domain.suggestion.OfflineCategorySuggestionEngine
+import fi.cartio.data.repository.OfflineCartioRepository
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -35,5 +36,12 @@ class CartioDatabaseTest {
         val deleted = dao.deleteSavedSnapshot(savedId)!!; assertEquals(0, dao.observeSavedLists().first().size)
         dao.restoreSavedList(deleted.list, deleted.items); assertEquals("Viikon ostokset", dao.observeSavedLists().first().single().name)
         dao.restore(savedId); assertEquals("Maito", dao.observeItems().first().single().name); dao.deleteItem(dao.observeItems().first().single().id); assertEquals(0, dao.observeItems().first().size)
+    }
+    @Test fun englishAndFinnishQueriesProvideOneTapSuggestions() {
+        val engine = OfflineCategorySuggestionEngine(db.dao())
+        val repository = OfflineCartioRepository(db.dao(), engine)
+        assertEquals("Eggs", repository.dictionarySuggestions("egg").single().name)
+        assertEquals(ProductCategory.DAIRY, repository.dictionarySuggestions("egg").single().category)
+        assertEquals("Appelsiini", repository.dictionarySuggestions("appels").single().name)
     }
 }
