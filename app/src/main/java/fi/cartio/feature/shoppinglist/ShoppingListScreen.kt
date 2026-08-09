@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -28,6 +29,8 @@ import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -56,9 +59,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -101,7 +108,6 @@ fun ShoppingListScreen(state: ShoppingListUiState, contentPadding: PaddingValues
             Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp, bottom = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                 Image(painterResource(R.drawable.cartio_foreground), contentDescription = null, modifier = Modifier.size(42.dp))
                 Text(LocalStrings.current.shoppingList, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f).padding(start = 10.dp))
-                IconButton(onClick = {}) { Icon(Icons.Outlined.MoreVert, contentDescription = null) }
             }
         }
         if (state.groupedItems.isEmpty()) item {
@@ -110,8 +116,8 @@ fun ShoppingListScreen(state: ShoppingListUiState, contentPadding: PaddingValues
                     Box(contentAlignment = Alignment.Center) { Image(painterResource(R.drawable.cartio_foreground), contentDescription = null, modifier = Modifier.size(96.dp)) }
                 }
                 Spacer(Modifier.height(24.dp))
-                Text(LocalStrings.current.emptyTitle, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                Text(LocalStrings.current.emptyBody, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 10.dp), style = MaterialTheme.typography.bodyLarge)
+                Text(LocalStrings.current.emptyTitle, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+                Text(LocalStrings.current.emptyBody, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.fillMaxWidth().padding(top = 10.dp), style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Center)
             }
         }
         ProductCategory.entries.forEach { category ->
@@ -146,19 +152,27 @@ private fun CategoryHeader(category: ProductCategory, count: Int, collapsed: Boo
 
 @Composable
 private fun ProductRow(product: ShoppingItem, onToggle: (ShoppingItem) -> Unit, onRemove: (ShoppingItem) -> Unit, onEdit: (ShoppingItem) -> Unit) {
+    var menuExpanded by remember { mutableStateOf(false) }
     Row(
-        Modifier.fillMaxWidth().testTag("product_${product.normalizedName}").clickable(role = Role.Checkbox) { onToggle(product) }.alpha(if (product.checked) .58f else 1f).padding(start = 20.dp, end = 8.dp, top = 5.dp, bottom = 5.dp),
+        Modifier.fillMaxWidth().testTag("product_${product.normalizedName}").clickable(role = Role.Checkbox) { onToggle(product) }.alpha(if (product.checked) .58f else 1f).padding(start = 20.dp, end = 4.dp, top = 5.dp, bottom = 5.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(productIcon(product.name, product.category), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(end = 12.dp))
-        Text(product.name, modifier = Modifier.weight(1f).padding(vertical = 11.dp), fontWeight = FontWeight.Medium, textDecoration = if (product.checked) TextDecoration.LineThrough else null)
-        product.quantity?.let { Text("${it}${product.unit.orEmpty()}", color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        Column(Modifier.weight(1f).padding(vertical = 9.dp)) {
+            Text(product.name, fontWeight = FontWeight.Medium, textDecoration = if (product.checked) TextDecoration.LineThrough else null, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            product.quantity?.let { Text("${it}${product.unit.orEmpty()}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        }
         Box(
-            Modifier.size(26.dp).background(if (product.checked) MaterialTheme.colorScheme.primary else Color.Transparent, CircleShape).border(1.5.dp, if (product.checked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, CircleShape).clickable(role = Role.Checkbox) { onToggle(product) },
+            Modifier.padding(11.dp).size(26.dp).background(if (product.checked) MaterialTheme.colorScheme.primary else Color.Transparent, CircleShape).border(1.5.dp, if (product.checked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, CircleShape),
             contentAlignment = Alignment.Center,
         ) { Text(if (product.checked) "✓" else "", color = Color.White, fontWeight = FontWeight.Bold) }
-        IconButton(onClick = { onEdit(product) }) { Icon(Icons.Outlined.Edit, contentDescription = LocalStrings.current.editProduct, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
-        IconButton(onClick = { onRemove(product) }) { Icon(Icons.Outlined.DeleteOutline, contentDescription = LocalStrings.current.delete, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
+        Box {
+            IconButton(onClick = { menuExpanded = true }) { Icon(Icons.Outlined.MoreVert, contentDescription = LocalStrings.current.moreOptions, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
+            DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                DropdownMenuItem(text = { Text(LocalStrings.current.editProduct) }, leadingIcon = { Icon(Icons.Outlined.Edit, null) }, onClick = { menuExpanded = false; onEdit(product) })
+                DropdownMenuItem(text = { Text(LocalStrings.current.delete) }, leadingIcon = { Icon(Icons.Outlined.DeleteOutline, null) }, onClick = { menuExpanded = false; onRemove(product) })
+            }
+        }
     }
 }
 
@@ -171,7 +185,7 @@ private fun ProductEditorSheet(item: ShoppingItem, onDismiss: () -> Unit, onSave
     var category by remember(item.id) { mutableStateOf(item.category) }
     val strings = LocalStrings.current
     ModalBottomSheet(onDismissRequest = onDismiss, shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)) {
-        Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(bottom = 28.dp)) {
+        Column(Modifier.fillMaxWidth().imePadding().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 28.dp)) {
             Text(strings.editProduct, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 16.dp))
             OutlinedTextField(name, { name = it }, label = { Text(strings.productName) }, singleLine = true, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth())
             Row(Modifier.fillMaxWidth().padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {

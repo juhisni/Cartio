@@ -36,6 +36,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.text.font.FontWeight
@@ -97,5 +98,5 @@ import fi.cartio.feature.shoppinglist.ShoppingListViewModel
 @Composable private fun SuggestionGroup(title: String, values: List<ProductSuggestion>, onAdd: (String) -> Unit) {
     if (values.isEmpty()) return
     Text(title, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 18.dp, bottom = 6.dp))
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { values.distinctBy { it.name }.forEach { suggestion -> AssistChip(onClick = { onAdd(suggestion.name) }, shape = RoundedCornerShape(12.dp), colors = AssistChipDefaults.assistChipColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), label = { Text("${productIcon(suggestion.name, suggestion.category)}  ${suggestion.name}") }) } }
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { values.distinctBy { it.name }.forEach { suggestion -> AssistChip(onClick = { onAdd(suggestion.name) }, shape = RoundedCornerShape(12.dp), colors = AssistChipDefaults.assistChipColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), label = { Text("${productIcon(suggestion.name, suggestion.category)}  ${suggestion.name}", maxLines = 2, overflow = TextOverflow.Ellipsis) }) } }
 }

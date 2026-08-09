@@ -19,12 +19,16 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.BookmarkBorder
+import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -41,6 +45,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -67,7 +73,7 @@ fun SavedListsRoute(contentPadding: PaddingValues, onRestored: () -> Unit, viewM
         item {
             Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(strings.saved, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                Button(onClick = { dialog = DialogState.Save }, shape = RoundedCornerShape(14.dp)) { Icon(Icons.Outlined.Add, null); Text(strings.saveList, modifier = Modifier.padding(start = 6.dp)) }
+                FilledTonalIconButton(onClick = { dialog = DialogState.Save }, modifier = Modifier.size(48.dp)) { Icon(Icons.Outlined.Add, strings.saveList) }
             }
         }
         if (state.hasSavedLists) item {
@@ -81,22 +87,49 @@ fun SavedListsRoute(contentPadding: PaddingValues, onRestored: () -> Unit, viewM
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
             )
         }
-        if (state.lists.isEmpty()) item { Text(if (state.hasSavedLists) strings.noMatchingLists else strings.emptyTitle, modifier = Modifier.padding(40.dp), color = MaterialTheme.colorScheme.onSurfaceVariant) }
-        items(state.lists, key = { it.id }) { list ->
-            Card(Modifier.fillMaxWidth().padding(horizontal = 20.dp), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)) {
-                Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.size(48.dp).background(MaterialTheme.colorScheme.primary.copy(alpha = .14f), RoundedCornerShape(14.dp)), contentAlignment = Alignment.Center) { Icon(Icons.Outlined.ShoppingCart, null, tint = MaterialTheme.colorScheme.primary) }
-                    Column(Modifier.weight(1f).padding(start = 12.dp)) { Text(list.name, fontWeight = FontWeight.SemiBold); Text("${list.itemCount} ${if (strings.finnish == "Suomi") "tuotetta" else "items"}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-                    TextButton(onClick = { viewModel.restore(list.id); onRestored() }) { Text(strings.restore) }
-                    IconButton(onClick = { dialog = DialogState.Rename(list) }) { Icon(Icons.Outlined.Edit, strings.rename) }
-                    IconButton(onClick = { viewModel.delete(list.id) }) { Icon(Icons.Outlined.Delete, strings.delete) }
+        if (state.lists.isEmpty()) item {
+            if (state.hasSavedLists) {
+                Text(strings.noMatchingLists, modifier = Modifier.fillMaxWidth().padding(40.dp), color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+            } else {
+                Column(Modifier.fillParentMaxWidth().padding(horizontal = 40.dp, vertical = 72.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Box(Modifier.size(88.dp).background(MaterialTheme.colorScheme.primary.copy(alpha = .1f), RoundedCornerShape(28.dp)), contentAlignment = Alignment.Center) {
+                        Icon(Icons.Outlined.BookmarkBorder, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(42.dp))
+                    }
+                    Text(strings.savedEmptyTitle, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 20.dp))
+                    Text(strings.savedEmptyBody, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 8.dp))
                 }
             }
+        }
+        items(state.lists, key = { it.id }) { list ->
+            SavedListCard(list, onRestore = { viewModel.restore(list.id); onRestored() }, onRename = { dialog = DialogState.Rename(list) }, onDelete = { viewModel.delete(list.id) })
         }
         }
         SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).padding(bottom = contentPadding.calculateBottomPadding() + 16.dp))
     }
     dialog?.let { state -> NameDialog(initial = (state as? DialogState.Rename)?.list?.name.orEmpty(), title = if (state is DialogState.Save) strings.saveList else strings.rename, onDismiss = { dialog = null }, onConfirm = { name -> if (state is DialogState.Save) viewModel.save(name) else viewModel.rename((state as DialogState.Rename).list.id, name); dialog = null }) }
+}
+
+@Composable
+private fun SavedListCard(list: SavedShoppingList, onRestore: () -> Unit, onRename: () -> Unit, onDelete: () -> Unit) {
+    var menuExpanded by remember { mutableStateOf(false) }
+    val strings = LocalStrings.current
+    Card(Modifier.fillMaxWidth().padding(horizontal = 20.dp), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)) {
+        Row(Modifier.fillMaxWidth().padding(start = 12.dp, top = 12.dp, bottom = 12.dp, end = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(48.dp).background(MaterialTheme.colorScheme.primary.copy(alpha = .14f), RoundedCornerShape(14.dp)), contentAlignment = Alignment.Center) { Icon(Icons.Outlined.ShoppingCart, null, tint = MaterialTheme.colorScheme.primary) }
+            Column(Modifier.weight(1f).padding(start = 12.dp)) {
+                Text(list.name, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(strings.itemCount.format(list.itemCount), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            TextButton(onClick = onRestore) { Text(strings.restore) }
+            Box {
+                IconButton(onClick = { menuExpanded = true }) { Icon(Icons.Outlined.MoreVert, strings.moreOptions) }
+                DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                    DropdownMenuItem(text = { Text(strings.rename) }, leadingIcon = { Icon(Icons.Outlined.Edit, null) }, onClick = { menuExpanded = false; onRename() })
+                    DropdownMenuItem(text = { Text(strings.delete) }, leadingIcon = { Icon(Icons.Outlined.Delete, null) }, onClick = { menuExpanded = false; onDelete() })
+                }
+            }
+        }
+    }
 }
 
 private sealed interface DialogState { data object Save : DialogState; data class Rename(val list: SavedShoppingList) : DialogState }

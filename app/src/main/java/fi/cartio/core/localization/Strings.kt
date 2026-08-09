@@ -18,6 +18,8 @@ data class CartioStrings(
     val catalogAttribution: String,
     val addTypedProduct: String,
     val productNotFound: String,
+    val savedEmptyTitle: String, val savedEmptyBody: String, val itemCount: String, val moreOptions: String,
+    val offlineDescription: String,
 )
 
 val LocalStrings = staticCompositionLocalOf { strings(AppLanguage.FINNISH) }
@@ -27,14 +29,16 @@ fun strings(language: AppLanguage) = if (language == AppLanguage.FINNISH) Cartio
     "Tallenna lista", "Listan nimi", "Ota käyttöön", "Nimeä uudelleen", "Poista", "Kieli / Language", "Teema", "Tietoja sovelluksesta",
     "Vaalea", "Tumma", "Järjestelmän mukaan", "Suomi", "English", "Peruuta", "Tallenna", "lisätty",
     "Muokkaa tuotetta", "Tuotteen nimi", "Määrä", "Yksikkö", "Kategoria", "poistettu", "Kumoa", "Laajenna kategoria", "Tiivistä kategoria",
-    "Hae listoja", "Hakua vastaavia listoja ei löytynyt", "Tuoteluettelo: Fineli / THL, CC BY 4.0", "Lisää ”%s” listalle", "Etkö löytänyt etsimääsi tuotetta?"
+    "Hae listoja", "Hakua vastaavia listoja ei löytynyt", "Tuoteluettelo: Fineli / THL, CC BY 4.0", "Lisää ”%s” listalle", "Etkö löytänyt etsimääsi tuotetta?",
+    "Ei tallennettuja listoja", "Tallenna usein käyttämäsi ostoslista, niin saat sen myöhemmin käyttöön yhdellä napautuksella.", "%d tuotetta", "Lisää toimintoja", "Nopea, rauhallinen ja täysin offline."
 ) else CartioStrings(
     "Shopping list", "Main", "Saved", "Settings", "Add product", "Search or type a product",
     "Recently added", "Frequently added", "Your list is empty", "Add your first product quickly with the plus button.",
     "Save list", "List name", "Use list", "Rename", "Delete", "Language", "Theme", "About Cartio",
     "Light", "Dark", "System default", "Finnish", "English", "Cancel", "Save", "added",
     "Edit product", "Product name", "Quantity", "Unit", "Category", "removed", "Undo", "Expand category", "Collapse category",
-    "Search lists", "No matching lists found", "Product catalog: Fineli / THL, CC BY 4.0", "Add “%s” to list", "Didn't find the product you were looking for?"
+    "Search lists", "No matching lists found", "Product catalog: Fineli / THL, CC BY 4.0", "Add “%s” to list", "Didn't find the product you were looking for?",
+    "No saved lists", "Save a shopping list you use often and restore it later with one tap.", "%d items", "More options", "Fast, calm, and completely offline."
 )
 
 @Composable fun categoryName(category: ProductCategory): String {

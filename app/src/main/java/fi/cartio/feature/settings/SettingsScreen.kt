@@ -58,7 +58,7 @@ fun SettingsRoute(viewModel: SettingsViewModel, contentPadding: PaddingValues) {
         item {
             SettingsCard(Icons.Outlined.Info, strings.appInfo) {
                 Text("Cartio 1.0", fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
-                Text(if (strings.main == "Päänäkymä") "Nopea, rauhallinen ja täysin offline." else "Fast, calm, and completely offline.", color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
+                Text(strings.offlineDescription, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
                 Text(strings.catalogAttribution, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
             }
         }
