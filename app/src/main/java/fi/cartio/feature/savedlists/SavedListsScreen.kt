@@ -28,7 +28,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,11 +51,18 @@ fun SavedListsRoute(contentPadding: PaddingValues, onRestored: () -> Unit, viewM
     val lists by viewModel.lists.collectAsStateWithLifecycle()
     var dialog by remember { mutableStateOf<DialogState?>(null) }
     val strings = LocalStrings.current
-    LazyColumn(
-        Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
-        contentPadding = PaddingValues(top = contentPadding.calculateTopPadding() + 16.dp, bottom = contentPadding.calculateBottomPadding() + 24.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
+    val snackbar = remember { SnackbarHostState() }
+    LaunchedEffect(viewModel, strings.undo) {
+        viewModel.deletions.collect { snapshot ->
+            if (snackbar.showSnackbar("${snapshot.list.name} ${strings.removed}", actionLabel = strings.undo, withDismissAction = true) == SnackbarResult.ActionPerformed) viewModel.undoDelete(snapshot)
+        }
+    }
+    Box(Modifier.fillMaxSize()) {
+        LazyColumn(
+            Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
+            contentPadding = PaddingValues(top = contentPadding.calculateTopPadding() + 16.dp, bottom = contentPadding.calculateBottomPadding() + 24.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
         item {
             Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(strings.saved, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
@@ -63,13 +74,15 @@ fun SavedListsRoute(contentPadding: PaddingValues, onRestored: () -> Unit, viewM
             Card(Modifier.fillMaxWidth().padding(horizontal = 20.dp), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)) {
                 Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                     Box(Modifier.size(48.dp).background(MaterialTheme.colorScheme.primary.copy(alpha = .14f), RoundedCornerShape(14.dp)), contentAlignment = Alignment.Center) { Icon(Icons.Outlined.ShoppingCart, null, tint = MaterialTheme.colorScheme.primary) }
-                    Column(Modifier.weight(1f).padding(start = 12.dp)) { Text(list.name, fontWeight = FontWeight.SemiBold); Text("${list.itemCount} ${if (strings.main == "Päänäkymä") "tuotetta" else "items"}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                    Column(Modifier.weight(1f).padding(start = 12.dp)) { Text(list.name, fontWeight = FontWeight.SemiBold); Text("${list.itemCount} ${if (strings.finnish == "Suomi") "tuotetta" else "items"}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
                     TextButton(onClick = { viewModel.restore(list.id); onRestored() }) { Text(strings.restore) }
                     IconButton(onClick = { dialog = DialogState.Rename(list) }) { Icon(Icons.Outlined.Edit, strings.rename) }
                     IconButton(onClick = { viewModel.delete(list.id) }) { Icon(Icons.Outlined.Delete, strings.delete) }
                 }
             }
         }
+        }
+        SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).padding(bottom = contentPadding.calculateBottomPadding() + 16.dp))
     }
     dialog?.let { state -> NameDialog(initial = (state as? DialogState.Rename)?.list?.name.orEmpty(), title = if (state is DialogState.Save) strings.saveList else strings.rename, onDismiss = { dialog = null }, onConfirm = { name -> if (state is DialogState.Save) viewModel.save(name) else viewModel.rename((state as DialogState.Rename).list.id, name); dialog = null }) }
 }

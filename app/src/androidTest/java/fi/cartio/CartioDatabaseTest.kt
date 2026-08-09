@@ -32,6 +32,8 @@ class CartioDatabaseTest {
         val dao = db.dao(); val now = System.currentTimeMillis(); val item = ShoppingItemEntity(name = "Maito", normalizedName = "maito", quantity = null, unit = null, category = ProductCategory.DAIRY, checked = false, createdAt = now, updatedAt = now)
         val id = dao.insertItem(item); dao.updateItem(item.copy(id = id, checked = true)); assertEquals(true, dao.observeItems().first().single().checked)
         val savedId = dao.saveCurrent("Viikon ostokset"); dao.deleteItem(id); assertEquals(0, dao.observeItems().first().size)
+        val deleted = dao.deleteSavedSnapshot(savedId)!!; assertEquals(0, dao.observeSavedLists().first().size)
+        dao.restoreSavedList(deleted.list, deleted.items); assertEquals("Viikon ostokset", dao.observeSavedLists().first().single().name)
         dao.restore(savedId); assertEquals("Maito", dao.observeItems().first().single().name); dao.deleteItem(dao.observeItems().first().single().id); assertEquals(0, dao.observeItems().first().size)
     }
 }

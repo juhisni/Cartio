@@ -46,6 +46,15 @@ class ShoppingListViewModelTest {
         assertEquals(2.0, updated.quantity!!, 0.0)
         assertEquals("l", updated.unit)
     }
+
+    @Test fun removedProductCanBeRestored() = runTest(dispatcher) {
+        val repository = FakeRepository(); val viewModel = ShoppingListViewModel(repository)
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.state.collect {} }
+        viewModel.add("maito"); advanceUntilIdle()
+        val item = viewModel.state.value.groupedItems[ProductCategory.DAIRY]!!.single()
+        viewModel.remove(item); advanceUntilIdle(); assertEquals(0, viewModel.state.value.groupedItems.size)
+        viewModel.undoRemove(item); advanceUntilIdle(); assertEquals("Maito", viewModel.state.value.groupedItems[ProductCategory.DAIRY]!!.single().name)
+    }
 }
 
 private class FakeRepository : CartioRepository {
@@ -56,7 +65,10 @@ private class FakeRepository : CartioRepository {
     override suspend fun toggle(item: ShoppingItem) { mutableItems.value = listOf(item.copy(checked = !item.checked)) }
     override suspend fun update(item: ShoppingItem) { mutableItems.value = listOf(item) }
     override suspend fun remove(id: Long) { mutableItems.value = emptyList() }
-    override suspend fun save(name: String) = Unit; override suspend fun restore(id: Long) = Unit; override suspend fun rename(id: Long, name: String) = Unit; override suspend fun deleteSaved(id: Long) = Unit
+    override suspend fun restoreItem(item: ShoppingItem) { mutableItems.value = listOf(item) }
+    override suspend fun save(name: String) = Unit; override suspend fun restore(id: Long) = Unit; override suspend fun rename(id: Long, name: String) = Unit
+    override suspend fun deleteSaved(id: Long): fi.cartio.core.model.SavedListSnapshot? = null
+    override suspend fun restoreSaved(snapshot: fi.cartio.core.model.SavedListSnapshot) = Unit
     override suspend fun learn(name: String, category: ProductCategory) = Unit
     override suspend fun recent() = emptyList<ProductSuggestion>(); override suspend fun frequent() = emptyList<ProductSuggestion>()
     override fun dictionarySuggestions(query: String) = emptyList<ProductSuggestion>()

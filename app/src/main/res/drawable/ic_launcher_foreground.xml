@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:gravity="center" android:width="88dp" android:height="86dp" android:drawable="@drawable/cartio_foreground" />
+    <!-- Keep the complete round artwork inside Android's adaptive-icon safe zone. -->
+    <item android:gravity="center" android:width="78dp" android:height="78dp" android:drawable="@drawable/cartio_round_app_icon" />
 </layer-list>

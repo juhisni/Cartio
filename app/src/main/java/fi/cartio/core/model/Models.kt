@@ -17,4 +17,5 @@ data class ShoppingItem(
 )
 
 data class SavedShoppingList(val id: Long, val name: String, val itemCount: Int, val createdAt: Long)
+data class SavedListSnapshot(val list: SavedShoppingList, val items: List<ShoppingItem>)
 data class ProductSuggestion(val name: String, val category: ProductCategory)

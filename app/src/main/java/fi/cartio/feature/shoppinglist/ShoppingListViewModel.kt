@@ -34,6 +34,8 @@ class ShoppingListViewModel @Inject constructor(private val repository: CartioRe
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ShoppingListUiState())
     private val feedbackChannel = Channel<String>(Channel.BUFFERED)
     val feedback = feedbackChannel.receiveAsFlow()
+    private val removalChannel = Channel<ShoppingItem>(Channel.BUFFERED)
+    val removals = removalChannel.receiveAsFlow()
 
     init { refreshHistory() }
     fun setQuery(value: String) { query.value = value }
@@ -48,6 +50,7 @@ class ShoppingListViewModel @Inject constructor(private val repository: CartioRe
     }
     fun toggle(item: ShoppingItem) { viewModelScope.launch { repository.toggle(item) } }
     fun update(item: ShoppingItem) { viewModelScope.launch { repository.update(item) } }
-    fun remove(item: ShoppingItem) { viewModelScope.launch { repository.remove(item.id) } }
+    fun remove(item: ShoppingItem) { viewModelScope.launch { repository.remove(item.id); removalChannel.send(item) } }
+    fun undoRemove(item: ShoppingItem) { viewModelScope.launch { repository.restoreItem(item) } }
     private fun refreshHistory() { viewModelScope.launch { history.value = repository.recent() to repository.frequent() } }
 }

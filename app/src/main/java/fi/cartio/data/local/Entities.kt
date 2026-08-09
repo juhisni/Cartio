@@ -20,3 +20,5 @@ data class LearnedProductCategoryEntity(@PrimaryKey val normalizedName: String, 
 
 @Entity(tableName = "product_usage")
 data class ProductUsageEntity(@PrimaryKey val normalizedName: String, val displayName: String, val category: ProductCategory, val useCount: Int, val lastUsedAt: Long)
+
+data class SavedListEntitySnapshot(val list: SavedShoppingListEntity, val items: List<SavedShoppingListItemEntity>)

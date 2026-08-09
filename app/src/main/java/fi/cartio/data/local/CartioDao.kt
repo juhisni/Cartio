@@ -18,6 +18,7 @@ interface CartioDao {
     @Query("SELECT * FROM shopping_items") suspend fun getItems(): List<ShoppingItemEntity>
 
     @Query("SELECT * FROM saved_lists ORDER BY createdAt DESC") fun observeSavedLists(): Flow<List<SavedShoppingListEntity>>
+    @Query("SELECT * FROM saved_lists WHERE id = :id") suspend fun getSavedList(id: Long): SavedShoppingListEntity?
     @Query("SELECT COUNT(*) FROM saved_list_items WHERE listId = :id") suspend fun savedItemCount(id: Long): Int
     @Insert suspend fun insertSavedList(list: SavedShoppingListEntity): Long
     @Insert suspend fun insertSavedItems(items: List<SavedShoppingListItemEntity>)
@@ -42,5 +43,17 @@ interface CartioDao {
         clearItems()
         val now = System.currentTimeMillis()
         getSavedItems(id).forEach { insertItem(ShoppingItemEntity(name = it.name, normalizedName = it.normalizedName, quantity = it.quantity, unit = it.unit, category = it.category, checked = it.checked, createdAt = now, updatedAt = now)) }
+    }
+
+    @Transaction suspend fun restoreSavedList(list: SavedShoppingListEntity, items: List<SavedShoppingListItemEntity>) {
+        insertSavedList(list)
+        insertSavedItems(items)
+    }
+
+    @Transaction suspend fun deleteSavedSnapshot(id: Long): SavedListEntitySnapshot? {
+        val list = getSavedList(id) ?: return null
+        val items = getSavedItems(id)
+        deleteSavedList(id)
+        return SavedListEntitySnapshot(list, items)
     }
 }

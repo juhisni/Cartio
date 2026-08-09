@@ -31,12 +31,16 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.foundation.Image
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -67,7 +71,17 @@ import fi.cartio.R
 fun ShoppingListRoute(viewModel: ShoppingListViewModel, contentPadding: PaddingValues) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var editing by remember { mutableStateOf<ShoppingItem?>(null) }
-    ShoppingListScreen(state, contentPadding, viewModel::toggle, viewModel::remove, onEdit = { editing = it })
+    val snackbar = remember { SnackbarHostState() }
+    val strings = LocalStrings.current
+    LaunchedEffect(viewModel, strings.undo) {
+        viewModel.removals.collect { item ->
+            if (snackbar.showSnackbar("${item.name} ${strings.removed}", actionLabel = strings.undo, withDismissAction = true) == SnackbarResult.ActionPerformed) viewModel.undoRemove(item)
+        }
+    }
+    Box(Modifier.fillMaxSize()) {
+        ShoppingListScreen(state, contentPadding, viewModel::toggle, viewModel::remove, onEdit = { editing = it })
+        SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).padding(bottom = contentPadding.calculateBottomPadding() + 76.dp))
+    }
     editing?.let { item -> ProductEditorSheet(item, onDismiss = { editing = null }, onSave = { viewModel.update(it); editing = null }) }
 }
 

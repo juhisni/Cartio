@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <clipPath id="circleClip"><circle cx="512" cy="512" r="470"/></clipPath>
+    <linearGradient id="handleGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#5b6268"/><stop offset="45%" stop-color="#343b41"/><stop offset="100%" stop-color="#1b2228"/>
+    </linearGradient>
+    <linearGradient id="topGrad" x1="0.08" y1="0.05" x2="0.92" y2="0.92">
+      <stop offset="0%" stop-color="#d7f238"/><stop offset="45%" stop-color="#8fd836"/><stop offset="100%" stop-color="#249b3e"/>
+    </linearGradient>
+    <linearGradient id="bottomGrad" x1="0.08" y1="0.05" x2="0.92" y2="0.95">
+      <stop offset="0%" stop-color="#a5dc3a"/><stop offset="55%" stop-color="#55bb3d"/><stop offset="100%" stop-color="#218d40"/>
+    </linearGradient>
+    <radialGradient id="wheelGrad" cx="35%" cy="28%" r="72%">
+      <stop offset="0%" stop-color="#596169"/><stop offset="48%" stop-color="#353c43"/><stop offset="100%" stop-color="#171c21"/>
+    </radialGradient>
+    <radialGradient id="insideGrad" cx="52%" cy="4%" r="85%">
+      <stop offset="0%" stop-color="#c4ec39"/><stop offset="55%" stop-color="#86d438"/><stop offset="100%" stop-color="#42b23d"/>
+    </radialGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="180%">
+      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#000000" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+  <g clip-path="url(#circleClip)">
+    <circle cx="512" cy="512" r="470" fill="#ffffff"/>
+    <!-- Optically centered foreground for app-icon use -->
+    <g transform="translate(-68 -20) translate(512 512) scale(0.88) translate(-512 -512)">
+    <path d="M252 262 C236 260 225 271 225 286 C225 302 236 314 252 316 L354 330 C371 332 382 344 388 360 L408 411 L476 400 L448 322 C438 294 417 278 388 274Z"
+          fill="url(#handleGrad)" filter="url(#shadow)"/>
+    <path d="M338 426 C372 390 466 372 590 372 C707 372 792 390 824 425 C821 474 800 542 756 601 C718 640 649 657 590 657 C508 657 437 639 399 599 C358 543 343 476 338 426Z"
+          fill="url(#topGrad)" filter="url(#shadow)"/>
+    <path d="M346 424 C395 389 487 376 590 376 C692 376 777 390 815 424 C777 464 694 489 590 489 C485 489 395 463 346 424Z"
+          fill="url(#insideGrad)"/>
+    <path d="M341 418 L440 392 L558 485 L429 600 L351 524Z" fill="#c4ea38" opacity="0.55"/>
+    <path d="M429 602 C530 574 618 523 732 458 L827 416 L778 592 C690 639 583 661 470 642Z" fill="#45b13d" opacity="0.33"/>
+    <path d="M340 425 C385 469 486 496 590 496 C696 496 782 469 823 425"
+          fill="none" stroke="#ffffff" stroke-width="14" stroke-linecap="round"/>
+    <path d="M431 608 C479 628 533 637 590 637 C648 637 705 628 752 607 L718 744 C707 779 654 796 590 796 C525 796 474 780 461 744Z"
+          fill="url(#bottomGrad)" filter="url(#shadow)"/>
+    <path d="M431 610 C481 630 535 639 590 639 C648 639 704 629 751 610"
+          fill="none" stroke="#176f36" stroke-width="14" opacity="0.72" stroke-linecap="round"/>
+    <circle cx="520" cy="857" r="59" fill="url(#wheelGrad)" filter="url(#shadow)"/>
+    <circle cx="691" cy="857" r="59" fill="url(#wheelGrad)" filter="url(#shadow)"/>
+  
+    </g>
+</g>
+</svg>
