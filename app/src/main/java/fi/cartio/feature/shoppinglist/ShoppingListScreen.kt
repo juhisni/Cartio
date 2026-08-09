@@ -22,6 +22,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.ExpandLess
+import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.Icon
@@ -43,6 +45,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -87,6 +90,7 @@ fun ShoppingListRoute(viewModel: ShoppingListViewModel, contentPadding: PaddingV
 
 @Composable
 fun ShoppingListScreen(state: ShoppingListUiState, contentPadding: PaddingValues, onToggle: (ShoppingItem) -> Unit, onRemove: (ShoppingItem) -> Unit, onEdit: (ShoppingItem) -> Unit = {}) {
+    var collapsedCategories by rememberSaveable { mutableStateOf(emptySet<String>()) }
     LazyColumn(
         modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).animateContentSize(),
         contentPadding = PaddingValues(top = contentPadding.calculateTopPadding() + 8.dp, bottom = contentPadding.calculateBottomPadding() + 92.dp),
@@ -111,23 +115,30 @@ fun ShoppingListScreen(state: ShoppingListUiState, contentPadding: PaddingValues
         ProductCategory.entries.forEach { category ->
             val products = state.groupedItems[category].orEmpty()
             if (products.isNotEmpty()) {
-                item(key = "header-$category") { CategoryHeader(category, products.count { !it.checked }) }
-                items(products, key = { it.id }) { product -> ProductRow(product, onToggle, onRemove, onEdit) }
+                val collapsed = category.name in collapsedCategories
+                item(key = "header-$category") {
+                    CategoryHeader(category, products.count { !it.checked }, collapsed) {
+                        collapsedCategories = if (collapsed) collapsedCategories - category.name else collapsedCategories + category.name
+                    }
+                }
+                if (!collapsed) items(products, key = { it.id }) { product -> ProductRow(product, onToggle, onRemove, onEdit) }
             }
         }
     }
 }
 
 @Composable
-private fun CategoryHeader(category: ProductCategory, count: Int) {
+private fun CategoryHeader(category: ProductCategory, count: Int, collapsed: Boolean, onToggle: () -> Unit) {
     val tint = categoryTint(category)
+    val strings = LocalStrings.current
     Row(
-        Modifier.fillMaxWidth().testTag("category_${category.name}").background(tint.copy(alpha = .07f)).padding(horizontal = 20.dp, vertical = 10.dp),
+        Modifier.fillMaxWidth().testTag("category_${category.name}").background(tint.copy(alpha = .07f)).clickable(role = Role.Button, onClickLabel = if (collapsed) strings.expandCategory else strings.collapseCategory, onClick = onToggle).padding(start = 20.dp, end = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(categoryEmoji(category), modifier = Modifier.padding(end = 9.dp))
+        Text(categoryEmoji(category), modifier = Modifier.padding(end = 9.dp, top = 12.dp, bottom = 12.dp))
         Text(categoryName(category), modifier = Modifier.weight(1f), color = tint, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelLarge)
         Surface(shape = CircleShape, color = tint.copy(alpha = .14f)) { Text(count.toString(), color = tint, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 9.dp, vertical = 3.dp)) }
+        Icon(if (collapsed) Icons.Outlined.ExpandMore else Icons.Outlined.ExpandLess, contentDescription = null, tint = tint, modifier = Modifier.padding(start = 4.dp).size(24.dp))
     }
 }
 
