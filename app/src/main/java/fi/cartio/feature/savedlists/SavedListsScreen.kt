@@ -18,6 +18,7 @@ import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.ShoppingCart
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -48,7 +49,7 @@ import fi.cartio.core.model.SavedShoppingList
 
 @Composable
 fun SavedListsRoute(contentPadding: PaddingValues, onRestored: () -> Unit, viewModel: SavedListsViewModel = hiltViewModel()) {
-    val lists by viewModel.lists.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsStateWithLifecycle()
     var dialog by remember { mutableStateOf<DialogState?>(null) }
     val strings = LocalStrings.current
     val snackbar = remember { SnackbarHostState() }
@@ -69,8 +70,19 @@ fun SavedListsRoute(contentPadding: PaddingValues, onRestored: () -> Unit, viewM
                 Button(onClick = { dialog = DialogState.Save }, shape = RoundedCornerShape(14.dp)) { Icon(Icons.Outlined.Add, null); Text(strings.saveList, modifier = Modifier.padding(start = 6.dp)) }
             }
         }
-        if (lists.isEmpty()) item { Text(strings.emptyTitle, modifier = Modifier.padding(40.dp), color = MaterialTheme.colorScheme.onSurfaceVariant) }
-        items(lists, key = { it.id }) { list ->
+        if (state.hasSavedLists) item {
+            OutlinedTextField(
+                value = state.query,
+                onValueChange = viewModel::setQuery,
+                placeholder = { Text(strings.searchLists) },
+                leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
+                singleLine = true,
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+            )
+        }
+        if (state.lists.isEmpty()) item { Text(if (state.hasSavedLists) strings.noMatchingLists else strings.emptyTitle, modifier = Modifier.padding(40.dp), color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        items(state.lists, key = { it.id }) { list ->
             Card(Modifier.fillMaxWidth().padding(horizontal = 20.dp), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)) {
                 Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                     Box(Modifier.size(48.dp).background(MaterialTheme.colorScheme.primary.copy(alpha = .14f), RoundedCornerShape(14.dp)), contentAlignment = Alignment.Center) { Icon(Icons.Outlined.ShoppingCart, null, tint = MaterialTheme.colorScheme.primary) }

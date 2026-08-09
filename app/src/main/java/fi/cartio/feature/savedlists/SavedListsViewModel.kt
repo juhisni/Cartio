@@ -9,6 +9,8 @@ import fi.cartio.domain.repository.CartioRepository
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.channels.Channel
@@ -16,12 +18,26 @@ import kotlinx.coroutines.flow.receiveAsFlow
 
 @HiltViewModel
 class SavedListsViewModel @Inject constructor(private val repository: CartioRepository) : ViewModel() {
-    val lists: StateFlow<List<SavedShoppingList>> = repository.savedLists.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    private val query = MutableStateFlow("")
+    val state: StateFlow<SavedListsUiState> = combine(repository.savedLists, query) { lists, search ->
+        SavedListsUiState(
+            lists = if (search.isBlank()) lists else lists.filter { it.name.contains(search.trim(), ignoreCase = true) },
+            query = search,
+            hasSavedLists = lists.isNotEmpty(),
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SavedListsUiState())
     private val deletionChannel = Channel<SavedListSnapshot>(Channel.BUFFERED)
     val deletions = deletionChannel.receiveAsFlow()
+    fun setQuery(value: String) { query.value = value }
     fun save(name: String) { if (name.isNotBlank()) viewModelScope.launch { repository.save(name) } }
     fun restore(id: Long) { viewModelScope.launch { repository.restore(id) } }
     fun rename(id: Long, name: String) { if (name.isNotBlank()) viewModelScope.launch { repository.rename(id, name) } }
     fun delete(id: Long) { viewModelScope.launch { repository.deleteSaved(id)?.let { deletionChannel.send(it) } } }
     fun undoDelete(snapshot: SavedListSnapshot) { viewModelScope.launch { repository.restoreSaved(snapshot) } }
 }
+
+data class SavedListsUiState(
+    val lists: List<SavedShoppingList> = emptyList(),
+    val query: String = "",
+    val hasSavedLists: Boolean = false,
+)
