@@ -18,10 +18,11 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -56,25 +57,39 @@ import fi.cartio.feature.shoppinglist.ShoppingListViewModel
         Column(Modifier.fillMaxWidth().fillMaxHeight(.82f).imePadding().padding(horizontal = 20.dp)) {
             Text(text.addProduct, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 14.dp))
             OutlinedTextField(value = state.query, onValueChange = viewModel::setQuery, modifier = Modifier.fillMaxWidth().focusRequester(focus).testTag("quick_add_input"), shape = RoundedCornerShape(16.dp), singleLine = true, placeholder = { Text(text.searchHint) }, leadingIcon = { Icon(Icons.Outlined.Search, null) }, keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done), keyboardActions = KeyboardActions(onDone = { viewModel.add() }))
-            if (state.query.isNotBlank()) {
-                FilledTonalButton(
-                    onClick = { viewModel.add() },
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(top = 10.dp).testTag("add_typed_product"),
-                    shape = RoundedCornerShape(14.dp),
-                ) {
-                    Icon(Icons.Rounded.Add, contentDescription = null)
-                    Text(text.addTypedProduct.format(state.query.trim()), modifier = Modifier.padding(start = 8.dp))
-                }
-            }
             Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
                 if (state.query.isBlank()) {
                     SuggestionGroup(text.recent, state.recent, viewModel::add)
                     SuggestionGroup(text.frequent, state.frequent, viewModel::add)
                 } else {
                     SuggestionGroup(text.addProduct, state.suggestions, viewModel::add)
+                    CustomProductAction(
+                        heading = text.productNotFound,
+                        action = text.addTypedProduct.format(state.query.trim()),
+                        onAdd = { viewModel.add() },
+                    )
                 }
             }
             SnackbarHost(snackbar, Modifier.fillMaxWidth().padding(bottom = 8.dp))
+        }
+    }
+}
+
+@Composable private fun CustomProductAction(heading: String, action: String, onAdd: () -> Unit) {
+    Column(Modifier.fillMaxWidth().padding(top = 20.dp, bottom = 8.dp)) {
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        Text(
+            heading,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 14.dp),
+        )
+        TextButton(
+            onClick = onAdd,
+            modifier = Modifier.heightIn(min = 48.dp).testTag("add_typed_product"),
+        ) {
+            Icon(Icons.Rounded.Add, contentDescription = null)
+            Text(action, modifier = Modifier.padding(start = 6.dp))
         }
     }
 }
