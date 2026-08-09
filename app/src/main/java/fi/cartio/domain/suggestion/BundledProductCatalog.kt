@@ -39,7 +39,7 @@ internal val products: List<CatalogProduct> = context.resources.openRawResource(
         EverydayProduct("Banaani", "Banana", ProductCategory.FRUITS_VEGETABLES),
         EverydayProduct("Maito", "Milk", ProductCategory.DAIRY, setOf("Maito", "Kevytmaito", "Täysmaito"), setOf("Milk")),
         EverydayProduct("Leipä", "Bread", ProductCategory.BREAD_GRAINS),
-        EverydayProduct("Kananmunat", "Eggs", ProductCategory.DAIRY, setOf("Kananmuna", "Kananmunat"), setOf("Egg", "Eggs")),
+        EverydayProduct("Kananmuna", "Egg", ProductCategory.DAIRY, setOf("Kananmuna", "Kananmunat"), setOf("Egg", "Eggs")),
         EverydayProduct("Juusto", "Cheese", ProductCategory.DAIRY),
         EverydayProduct("Kurkku", "Cucumber", ProductCategory.FRUITS_VEGETABLES),
         EverydayProduct("Pasta", "Pasta", ProductCategory.PANTRY, setOf("Pasta", "Spagetti", "Makaroni"), setOf("Pasta", "Spaghetti", "Macaroni")),
@@ -68,6 +68,13 @@ internal val products: List<CatalogProduct> = context.resources.openRawResource(
         (product.finnishAliases + product.englishAliases).map { normalizeProductInput(it) to product.category }
     }).distinctBy { it.first }.sortedByDescending { it.first.length }
 
+    private val finnishNames = (products.map { it.normalizedFinnish } + everydayProducts.flatMap { product ->
+        product.finnishAliases.map(::normalizeProductInput)
+    }).toSet()
+    private val englishNames = (products.map { it.normalizedEnglish } + everydayProducts.flatMap { product ->
+        product.englishAliases.map(::normalizeProductInput)
+    }).toSet()
+
     fun exactCategory(normalized: String): ProductCategory? = exactCategories[normalized]
 
     fun keywordCategory(normalized: String): ProductCategory? = searchableNames.firstOrNull { (name, _) ->
@@ -90,6 +97,7 @@ internal val products: List<CatalogProduct> = context.resources.openRawResource(
         val fineliMatches = products.asSequence().mapNotNull { product ->
             val name = if (language == AppLanguage.FINNISH) product.finnishName else product.englishName
             val normalizedName = if (language == AppLanguage.FINNISH) product.normalizedFinnish else product.normalizedEnglish
+            if (isRedundantPlural(normalizedName, language)) return@mapNotNull null
             val score = matchScore(normalizedName, query)
             if (score == Int.MAX_VALUE) null else RankedSuggestion(
                 suggestion = ProductSuggestion(
@@ -119,6 +127,21 @@ internal val products: List<CatalogProduct> = context.resources.openRawResource(
         value.split(' ').any { it.startsWith(query) } -> 2
         query in value -> 3
         else -> Int.MAX_VALUE
+    }
+
+    private fun isRedundantPlural(name: String, language: AppLanguage): Boolean {
+        val words = name.split(' ')
+        val last = words.lastOrNull() ?: return false
+        val prefix = words.dropLast(1).joinToString(" ").let { if (it.isBlank()) "" else "$it " }
+        val singularCandidates = if (language == AppLanguage.FINNISH) {
+            if (last.length > 2 && last.endsWith('t')) listOf(last.dropLast(1)) else emptyList()
+        } else buildList {
+            if (last.length > 3 && last.endsWith("ies")) add(last.dropLast(3) + "y")
+            if (last.length > 3 && last.endsWith("es")) add(last.dropLast(2))
+            if (last.length > 2 && last.endsWith('s') && !last.endsWith("ss")) add(last.dropLast(1))
+        }
+        val available = if (language == AppLanguage.FINNISH) finnishNames else englishNames
+        return singularCandidates.any { "$prefix$it" in available }
     }
 
     private fun String.displayCase() = lowercase(Locale.ROOT).replaceFirstChar { it.titlecase(Locale.getDefault()) }

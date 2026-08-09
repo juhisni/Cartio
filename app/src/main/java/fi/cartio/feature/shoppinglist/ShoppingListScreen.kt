@@ -245,10 +245,11 @@ private fun CreateListSheet(onDismiss: () -> Unit, onCreate: (String) -> Unit) {
 @Composable
 private fun SwitchListSheet(active: ActiveShoppingList?, lists: List<SavedShoppingList>, onDismiss: () -> Unit, onActivate: (Long) -> Unit, onCreate: () -> Unit, onManage: () -> Unit) {
     val strings = LocalStrings.current
+    val orderedLists = lists.sortedByDescending { if (it.id == active?.savedListId) 1 else 0 }
     ModalBottomSheet(onDismissRequest = onDismiss, shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(bottom = 24.dp)) {
             Text(strings.switchList, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.CenterHorizontally).padding(bottom = 14.dp))
-            lists.forEach { list ->
+            orderedLists.forEach { list ->
                 val selected = list.id == active?.savedListId
                 Surface(
                     onClick = { if (!selected) onActivate(list.id) },
@@ -305,15 +306,17 @@ private fun ProductRow(product: ShoppingItem, onToggle: (ShoppingItem) -> Unit, 
     var dragOffset by remember { mutableStateOf(0f) }
     val scale by animateFloatAsState(if (dragging) 1.02f else 1f, label = "productDragScale")
     Row(
-        Modifier.fillMaxWidth().testTag("product_${product.normalizedName}")
+        Modifier.fillMaxWidth()
+            .padding(start = 14.dp, end = 8.dp, top = 2.dp, bottom = 2.dp)
+            .testTag("product_${product.normalizedName}")
             .zIndex(if (dragging) 3f else 0f)
             .graphicsLayer { translationY = dragOffset; scaleX = scale; scaleY = scale }
             .shadow(if (dragging) 12.dp else 0.dp, RoundedCornerShape(16.dp))
-            .background(if (dragging) MaterialTheme.colorScheme.surfaceContainerHigh else Color.Transparent, RoundedCornerShape(16.dp))
+            .background(if (dragging) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(16.dp))
             .reorderable(onMove) { active, offset -> dragging = active; dragOffset = offset }
             .clickable(role = Role.Checkbox) { onToggle(product) }
             .alpha(if (product.checked) .58f else 1f)
-            .padding(start = 20.dp, end = 4.dp, top = 5.dp, bottom = 5.dp),
+            .padding(start = 16.dp, end = 4.dp, top = 5.dp, bottom = 5.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(productIcon(product.name, product.category), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(end = 12.dp))
