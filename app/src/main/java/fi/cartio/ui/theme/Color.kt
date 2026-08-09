@@ -2,10 +2,8 @@ package fi.cartio.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
-
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+val CartioGreen = Color(0xFF2E9E44)
+val CartioLightGreen = Color(0xFF67C23A)
+val CartioForest = Color(0xFF1B5E20)
+val CartioInk = Color(0xFF1F2933)
+val CartioCream = Color(0xFFF8F9F6)
