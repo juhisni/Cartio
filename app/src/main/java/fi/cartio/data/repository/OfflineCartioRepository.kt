@@ -62,32 +62,9 @@ class OfflineCartioRepository @Inject constructor(private val dao: CartioDao, pr
     override suspend fun recent() = dao.recent(6).map { ProductSuggestion(it.displayName, it.category) }
     override suspend fun frequent() = dao.frequent(8).map { ProductSuggestion(it.displayName, it.category) }
     override fun dictionarySuggestions(query: String): List<ProductSuggestion> {
-        val q = engine.normalize(query)
-        val matches = if (q.isBlank()) bundledSuggestions.filter { it.defaultSuggestion } else bundledSuggestions.filter { engine.normalize(it.name).contains(q) }
-        return matches.take(8).map { ProductSuggestion(it.name, it.category) }
+        return engine.suggestions(query)
     }
 }
-
-private data class BundledSuggestion(val name: String, val category: ProductCategory, val defaultSuggestion: Boolean = false)
-
-private val bundledSuggestions = listOf(
-    BundledSuggestion("Banaani", ProductCategory.FRUITS_VEGETABLES, true), BundledSuggestion("Banana", ProductCategory.FRUITS_VEGETABLES),
-    BundledSuggestion("Maito", ProductCategory.DAIRY, true), BundledSuggestion("Milk", ProductCategory.DAIRY),
-    BundledSuggestion("Leipä", ProductCategory.BREAD_GRAINS, true), BundledSuggestion("Bread", ProductCategory.BREAD_GRAINS),
-    BundledSuggestion("Kananmunat", ProductCategory.DAIRY, true), BundledSuggestion("Eggs", ProductCategory.DAIRY),
-    BundledSuggestion("Juusto", ProductCategory.DAIRY, true), BundledSuggestion("Cheese", ProductCategory.DAIRY),
-    BundledSuggestion("Kurkku", ProductCategory.FRUITS_VEGETABLES, true), BundledSuggestion("Cucumber", ProductCategory.FRUITS_VEGETABLES),
-    BundledSuggestion("Pasta", ProductCategory.PANTRY, true), BundledSuggestion("Lohi", ProductCategory.MEAT_FISH, true), BundledSuggestion("Salmon", ProductCategory.MEAT_FISH),
-    BundledSuggestion("Omena", ProductCategory.FRUITS_VEGETABLES), BundledSuggestion("Apple", ProductCategory.FRUITS_VEGETABLES),
-    BundledSuggestion("Appelsiini", ProductCategory.FRUITS_VEGETABLES), BundledSuggestion("Orange", ProductCategory.FRUITS_VEGETABLES),
-    BundledSuggestion("Peruna", ProductCategory.FRUITS_VEGETABLES), BundledSuggestion("Potato", ProductCategory.FRUITS_VEGETABLES),
-    BundledSuggestion("Kana", ProductCategory.MEAT_FISH), BundledSuggestion("Chicken", ProductCategory.MEAT_FISH),
-    BundledSuggestion("Riisi", ProductCategory.BREAD_GRAINS), BundledSuggestion("Rice", ProductCategory.BREAD_GRAINS),
-    BundledSuggestion("Kahvi", ProductCategory.PANTRY), BundledSuggestion("Coffee", ProductCategory.PANTRY),
-    BundledSuggestion("Tee", ProductCategory.PANTRY), BundledSuggestion("Tea", ProductCategory.PANTRY),
-    BundledSuggestion("Vesi", ProductCategory.DRINKS), BundledSuggestion("Water", ProductCategory.DRINKS),
-    BundledSuggestion("Talouspaperi", ProductCategory.HOUSEHOLD), BundledSuggestion("Paper towel", ProductCategory.HOUSEHOLD),
-)
 
 private fun ShoppingItemEntity.model() = ShoppingItem(id, name, normalizedName, quantity, unit, category, checked, createdAt, updatedAt)
 private fun ShoppingItem.entity() = ShoppingItemEntity(id, name, normalizedName, quantity, unit, category, checked, createdAt, updatedAt)

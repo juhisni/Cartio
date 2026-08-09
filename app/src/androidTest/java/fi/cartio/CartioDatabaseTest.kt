@@ -40,8 +40,8 @@ class CartioDatabaseTest {
     @Test fun englishAndFinnishQueriesProvideOneTapSuggestions() {
         val engine = OfflineCategorySuggestionEngine(db.dao())
         val repository = OfflineCartioRepository(db.dao(), engine)
-        assertEquals("Eggs", repository.dictionarySuggestions("egg").single().name)
-        assertEquals(ProductCategory.DAIRY, repository.dictionarySuggestions("egg").single().category)
-        assertEquals("Appelsiini", repository.dictionarySuggestions("appels").single().name)
+        val eggs = repository.dictionarySuggestions("egg")
+        assertEquals(ProductCategory.DAIRY, eggs.first { it.name == "Eggs" }.category)
+        assertEquals("Appelsiini", repository.dictionarySuggestions("appels").first().name)
     }
 }

@@ -42,5 +42,5 @@ $env:JAVA_HOME='C:\Program Files\Android\Android Studio\jbr'
 
 ## Current limitations
 
-- Product dictionary is intentionally compact and bundled in code for the first release.
+- The bundled catalog contains roughly 900 generic product concepts and 3,000–4,000 Finnish/English search terms; it intentionally avoids brand-specific SKUs.
 - No barcode scanner, cloud sync, accounts, analytics, notifications, or networking.
