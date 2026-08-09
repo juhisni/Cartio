@@ -4,12 +4,14 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
@@ -29,6 +31,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.draw.shadow
+import androidx.compose.foundation.shape.CircleShape
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -64,7 +69,7 @@ fun CartioApp(settingsViewModel: SettingsViewModel = hiltViewModel(), shoppingVi
             Scaffold(
                 modifier = Modifier.fillMaxSize(),
                 bottomBar = {
-                    NavigationBar(modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars)) {
+                    NavigationBar(modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars), containerColor = MaterialTheme.colorScheme.surface, tonalElevation = 0.dp) {
                         Destination.entries.forEach { destination ->
                             val label = when (destination) { Destination.Main -> labels.main; Destination.Saved -> labels.saved; Destination.Settings -> labels.settings }
                             NavigationBarItem(selected = current == destination.route, onClick = { nav.navigate(destination.route) { popUpTo(nav.graph.findStartDestination().id) { saveState = true }; launchSingleTop = true; restoreState = true } }, icon = { Icon(destination.icon, contentDescription = label) }, label = { Text(label) }, colors = NavigationBarItemDefaults.colors(selectedIconColor = MaterialTheme.colorScheme.primary, selectedTextColor = MaterialTheme.colorScheme.primary, indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = .12f)))
@@ -72,7 +77,7 @@ fun CartioApp(settingsViewModel: SettingsViewModel = hiltViewModel(), shoppingVi
                     }
                 },
                 floatingActionButton = {
-                    if (current == Destination.Main.route) FloatingActionButton(onClick = { quickAdd = true }, modifier = Modifier.testTag("open_quick_add"), containerColor = MaterialTheme.colorScheme.primary) { Text("+", style = MaterialTheme.typography.headlineMedium) }
+                    if (current == Destination.Main.route) FloatingActionButton(onClick = { quickAdd = true }, modifier = Modifier.size(64.dp).shadow(12.dp, CircleShape).testTag("open_quick_add"), shape = CircleShape, containerColor = MaterialTheme.colorScheme.primary) { Icon(Icons.Rounded.Add, contentDescription = labels.addProduct, modifier = Modifier.size(32.dp)) }
                 },
                 floatingActionButtonPosition = FabPosition.Center,
             ) { padding ->
