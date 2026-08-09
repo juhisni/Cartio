@@ -1,6 +1,7 @@
 package fi.cartio.feature.shoppinglist
 
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -56,16 +57,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.CustomAccessibilityAction
@@ -82,6 +87,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import fi.cartio.core.localization.LocalStrings
 import fi.cartio.core.designsystem.categoryIcon
@@ -270,8 +277,18 @@ private fun SwitchListSheet(active: ActiveShoppingList?, lists: List<SavedShoppi
 private fun CategoryHeader(category: ProductCategory, count: Int, collapsed: Boolean, onToggle: () -> Unit, onMove: (Int) -> Unit) {
     val tint = categoryTint(category)
     val strings = LocalStrings.current
+    var dragging by remember { mutableStateOf(false) }
+    var dragOffset by remember { mutableStateOf(0f) }
+    val scale by animateFloatAsState(if (dragging) 1.015f else 1f, label = "categoryDragScale")
     Row(
-        Modifier.fillMaxWidth().testTag("category_${category.name}").reorderable(onMove).background(tint.copy(alpha = .07f)).clickable(role = Role.Button, onClickLabel = if (collapsed) strings.expandCategory else strings.collapseCategory, onClick = onToggle).padding(start = 20.dp, end = 12.dp),
+        Modifier.fillMaxWidth().testTag("category_${category.name}")
+            .zIndex(if (dragging) 2f else 0f)
+            .graphicsLayer { translationY = dragOffset; scaleX = scale; scaleY = scale }
+            .shadow(if (dragging) 10.dp else 0.dp, RoundedCornerShape(14.dp))
+            .reorderable(onMove) { active, offset -> dragging = active; dragOffset = offset }
+            .background(if (dragging) tint.copy(alpha = .16f) else tint.copy(alpha = .07f), RoundedCornerShape(14.dp))
+            .clickable(role = Role.Button, onClickLabel = if (collapsed) strings.expandCategory else strings.collapseCategory, onClick = onToggle)
+            .padding(start = 20.dp, end = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(categoryIcon(category), modifier = Modifier.padding(end = 9.dp, top = 12.dp, bottom = 12.dp))
@@ -284,8 +301,19 @@ private fun CategoryHeader(category: ProductCategory, count: Int, collapsed: Boo
 @Composable
 private fun ProductRow(product: ShoppingItem, onToggle: (ShoppingItem) -> Unit, onRemove: (ShoppingItem) -> Unit, onEdit: (ShoppingItem) -> Unit, onMove: (Int) -> Unit) {
     var menuExpanded by remember { mutableStateOf(false) }
+    var dragging by remember { mutableStateOf(false) }
+    var dragOffset by remember { mutableStateOf(0f) }
+    val scale by animateFloatAsState(if (dragging) 1.02f else 1f, label = "productDragScale")
     Row(
-        Modifier.fillMaxWidth().testTag("product_${product.normalizedName}").reorderable(onMove).clickable(role = Role.Checkbox) { onToggle(product) }.alpha(if (product.checked) .58f else 1f).padding(start = 20.dp, end = 4.dp, top = 5.dp, bottom = 5.dp),
+        Modifier.fillMaxWidth().testTag("product_${product.normalizedName}")
+            .zIndex(if (dragging) 3f else 0f)
+            .graphicsLayer { translationY = dragOffset; scaleX = scale; scaleY = scale }
+            .shadow(if (dragging) 12.dp else 0.dp, RoundedCornerShape(16.dp))
+            .background(if (dragging) MaterialTheme.colorScheme.surfaceContainerHigh else Color.Transparent, RoundedCornerShape(16.dp))
+            .reorderable(onMove) { active, offset -> dragging = active; dragOffset = offset }
+            .clickable(role = Role.Checkbox) { onToggle(product) }
+            .alpha(if (product.checked) .58f else 1f)
+            .padding(start = 20.dp, end = 4.dp, top = 5.dp, bottom = 5.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(productIcon(product.name, product.category), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(end = 12.dp))
@@ -308,28 +336,34 @@ private fun ProductRow(product: ShoppingItem, onToggle: (ShoppingItem) -> Unit, 
 }
 
 @Composable
-private fun Modifier.reorderable(onMove: (Int) -> Unit): Modifier {
+private fun Modifier.reorderable(onMove: (Int) -> Unit, onDragVisual: (Boolean, Float) -> Unit): Modifier {
     val threshold = with(LocalDensity.current) { 44.dp.toPx() }
     var distance by remember { mutableStateOf(0f) }
     val strings = LocalStrings.current
+    val haptics = LocalHapticFeedback.current
+    val currentMove by rememberUpdatedState(onMove)
+    val currentVisual by rememberUpdatedState(onDragVisual)
     return this
-        .pointerInput(onMove, threshold) {
+        .pointerInput(threshold) {
             detectDragGesturesAfterLongPress(
-                onDragEnd = { distance = 0f },
-                onDragCancel = { distance = 0f },
+                onDragStart = { haptics.performHapticFeedback(HapticFeedbackType.LongPress); currentVisual(true, 0f) },
+                onDragEnd = { distance = 0f; currentVisual(false, 0f) },
+                onDragCancel = { distance = 0f; currentVisual(false, 0f) },
             ) { change, dragAmount ->
                 change.consume()
                 distance += dragAmount.y
                 if (abs(distance) >= threshold) {
-                    onMove(if (distance > 0) 1 else -1)
-                    distance = 0f
+                    val direction = if (distance > 0) 1 else -1
+                    currentMove(direction)
+                    distance -= threshold * direction
                 }
+                currentVisual(true, distance)
             }
         }
         .semantics {
             customActions = listOf(
-                CustomAccessibilityAction(strings.moveUp) { onMove(-1); true },
-                CustomAccessibilityAction(strings.moveDown) { onMove(1); true },
+                CustomAccessibilityAction(strings.moveUp) { currentMove(-1); true },
+                CustomAccessibilityAction(strings.moveDown) { currentMove(1); true },
             )
         }
 }
