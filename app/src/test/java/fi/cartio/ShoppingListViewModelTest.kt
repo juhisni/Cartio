@@ -1,5 +1,6 @@
 package fi.cartio
 
+import fi.cartio.core.model.AppLanguage
 import fi.cartio.core.model.ProductCategory
 import fi.cartio.core.model.ProductSuggestion
 import fi.cartio.core.model.SavedShoppingList
@@ -71,5 +72,5 @@ private class FakeRepository : CartioRepository {
     override suspend fun restoreSaved(snapshot: fi.cartio.core.model.SavedListSnapshot) = Unit
     override suspend fun learn(name: String, category: ProductCategory) = Unit
     override suspend fun recent() = emptyList<ProductSuggestion>(); override suspend fun frequent() = emptyList<ProductSuggestion>()
-    override fun dictionarySuggestions(query: String) = emptyList<ProductSuggestion>()
+    override fun dictionarySuggestions(query: String, language: AppLanguage) = emptyList<ProductSuggestion>()
 }

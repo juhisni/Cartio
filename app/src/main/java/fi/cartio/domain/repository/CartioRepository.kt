@@ -2,6 +2,7 @@ package fi.cartio.domain.repository
 
 import fi.cartio.core.model.ProductCategory
 import fi.cartio.core.model.ProductSuggestion
+import fi.cartio.core.model.AppLanguage
 import fi.cartio.core.model.SavedShoppingList
 import fi.cartio.core.model.SavedListSnapshot
 import fi.cartio.core.model.ShoppingItem
@@ -23,5 +24,5 @@ interface CartioRepository {
     suspend fun learn(name: String, category: ProductCategory)
     suspend fun recent(): List<ProductSuggestion>
     suspend fun frequent(): List<ProductSuggestion>
-    fun dictionarySuggestions(query: String): List<ProductSuggestion>
+    fun dictionarySuggestions(query: String, language: AppLanguage): List<ProductSuggestion>
 }

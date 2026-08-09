@@ -4,7 +4,9 @@ import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import fi.cartio.core.model.AppLanguage
 import fi.cartio.core.model.ProductCategory
+import fi.cartio.core.model.ProductSuggestion
 import fi.cartio.data.local.CartioDatabase
 import fi.cartio.data.local.LearnedProductCategoryEntity
 import fi.cartio.data.local.ShoppingItemEntity
@@ -44,8 +46,10 @@ class CartioDatabaseTest {
         val engine = OfflineCategorySuggestionEngine(db.dao(), catalog)
         val repository = OfflineCartioRepository(db.dao(), engine)
         assertEquals(535, catalog.products.size)
-        val eggs = repository.dictionarySuggestions("egg")
+        val eggs = repository.dictionarySuggestions("egg", AppLanguage.ENGLISH)
         assertEquals(ProductCategory.DAIRY, eggs.first { it.name == "Eggs" }.category)
-        assertEquals("Appelsiini", repository.dictionarySuggestions("appels").first().name)
+        assertEquals("Appelsiini", repository.dictionarySuggestions("appels", AppLanguage.FINNISH).first().name)
+        assertEquals(emptyList<ProductSuggestion>(), repository.dictionarySuggestions("egg", AppLanguage.FINNISH))
+        assertEquals(emptyList<ProductSuggestion>(), repository.dictionarySuggestions("jauhe", AppLanguage.ENGLISH))
     }
 }

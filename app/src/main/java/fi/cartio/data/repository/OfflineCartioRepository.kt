@@ -2,6 +2,7 @@ package fi.cartio.data.repository
 
 import fi.cartio.core.model.ProductCategory
 import fi.cartio.core.model.ProductSuggestion
+import fi.cartio.core.model.AppLanguage
 import fi.cartio.core.model.SavedShoppingList
 import fi.cartio.core.model.SavedListSnapshot
 import fi.cartio.core.model.ShoppingItem
@@ -61,8 +62,8 @@ class OfflineCartioRepository @Inject constructor(private val dao: CartioDao, pr
     override suspend fun learn(name: String, category: ProductCategory) = dao.learn(LearnedProductCategoryEntity(engine.normalize(name), category))
     override suspend fun recent() = dao.recent(6).map { ProductSuggestion(it.displayName, it.category) }
     override suspend fun frequent() = dao.frequent(8).map { ProductSuggestion(it.displayName, it.category) }
-    override fun dictionarySuggestions(query: String): List<ProductSuggestion> {
-        return engine.suggestions(query)
+    override fun dictionarySuggestions(query: String, language: AppLanguage): List<ProductSuggestion> {
+        return engine.suggestions(query, language)
     }
 }
 

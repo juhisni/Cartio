@@ -3,6 +3,7 @@ package fi.cartio.domain.suggestion
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import fi.cartio.R
+import fi.cartio.core.model.AppLanguage
 import fi.cartio.core.model.ProductCategory
 import fi.cartio.core.model.ProductSuggestion
 import java.util.Locale
@@ -73,25 +74,26 @@ internal val products: List<CatalogProduct> = context.resources.openRawResource(
         Regex("(^|\\s)${Regex.escape(name)}($|\\s)").containsMatchIn(normalized)
     }?.second
 
-    fun suggestions(query: String): List<ProductSuggestion> {
-        if (query.isBlank()) return everydayProducts.take(8).map { ProductSuggestion(it.finnishName, it.category) }
+    fun suggestions(query: String, language: AppLanguage): List<ProductSuggestion> {
+        if (query.isBlank()) return everydayProducts.take(8).map {
+            ProductSuggestion(if (language == AppLanguage.FINNISH) it.finnishName else it.englishName, it.category)
+        }
 
         val everydayMatches = everydayProducts.asSequence().mapNotNull { product ->
-            val fiScore = product.finnishAliases.minOf { matchScore(normalizeProductInput(it), query) }
-            val enScore = product.englishAliases.minOf { matchScore(normalizeProductInput(it), query) }
-            val score = minOf(fiScore, enScore)
+            val aliases = if (language == AppLanguage.FINNISH) product.finnishAliases else product.englishAliases
+            val score = aliases.minOf { matchScore(normalizeProductInput(it), query) }
             if (score == Int.MAX_VALUE) null else RankedSuggestion(
-                ProductSuggestion(if (enScore < fiScore) product.englishName else product.finnishName, product.category),
+                ProductSuggestion(if (language == AppLanguage.FINNISH) product.finnishName else product.englishName, product.category),
                 score,
             )
         }
         val fineliMatches = products.asSequence().mapNotNull { product ->
-            val fiScore = matchScore(product.normalizedFinnish, query)
-            val enScore = matchScore(product.normalizedEnglish, query)
-            val score = minOf(fiScore, enScore)
+            val name = if (language == AppLanguage.FINNISH) product.finnishName else product.englishName
+            val normalizedName = if (language == AppLanguage.FINNISH) product.normalizedFinnish else product.normalizedEnglish
+            val score = matchScore(normalizedName, query)
             if (score == Int.MAX_VALUE) null else RankedSuggestion(
                 suggestion = ProductSuggestion(
-                    name = if (enScore < fiScore) product.englishName.displayCase() else product.finnishName.displayCase(),
+                    name = name.displayCase(),
                     category = product.category,
                 ),
                 score = score,

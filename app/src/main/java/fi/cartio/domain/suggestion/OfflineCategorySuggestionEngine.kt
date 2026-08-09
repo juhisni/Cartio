@@ -2,6 +2,7 @@ package fi.cartio.domain.suggestion
 
 import fi.cartio.core.model.ProductCategory
 import fi.cartio.core.model.ProductSuggestion
+import fi.cartio.core.model.AppLanguage
 import fi.cartio.data.local.CartioDao
 import java.text.Normalizer
 import javax.inject.Inject
@@ -20,7 +21,8 @@ class OfflineCategorySuggestionEngine @Inject constructor(
             ?: ProductCategory.OTHER
     }
 
-    override fun suggestions(query: String): List<ProductSuggestion> = catalog.suggestions(normalize(query))
+    override fun suggestions(query: String, language: AppLanguage): List<ProductSuggestion> =
+        catalog.suggestions(normalize(query), language)
 }
 
 fun normalizeProductInput(input: String): String = Normalizer.normalize(input.trim().lowercase(), Normalizer.Form.NFC)

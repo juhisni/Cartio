@@ -86,6 +86,7 @@ fun CartioApp(
         return
     }
     val preferences by settingsViewModel.settings.collectAsStateWithLifecycle()
+    LaunchedEffect(preferences.language) { shoppingViewModel.setLanguage(preferences.language) }
     val dark = when (preferences.theme) { ThemePreference.DARK -> true; ThemePreference.LIGHT -> false; ThemePreference.SYSTEM -> isSystemInDarkTheme() }
     SideEffect { onDarkThemeChanged(dark) }
     CartioTheme(darkTheme = dark) {
