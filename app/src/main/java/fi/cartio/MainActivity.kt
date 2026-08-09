@@ -22,6 +22,12 @@ class MainActivity : ComponentActivity() {
                     brandedSplashVisible = false
                     WindowCompat.getInsetsController(window, window.decorView).show(WindowInsetsCompat.Type.systemBars())
                 },
+                onDarkThemeChanged = { darkTheme ->
+                    WindowCompat.getInsetsController(window, window.decorView).apply {
+                        isAppearanceLightStatusBars = !darkTheme
+                        isAppearanceLightNavigationBars = !darkTheme
+                    }
+                },
             )
         }
     }

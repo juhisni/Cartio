@@ -25,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -66,6 +67,7 @@ fun CartioApp(
     settingsViewModel: SettingsViewModel = hiltViewModel(),
     shoppingViewModel: ShoppingListViewModel = hiltViewModel(),
     onSplashFinished: () -> Unit = {},
+    onDarkThemeChanged: (Boolean) -> Unit = {},
 ) {
     var showSplash by remember { mutableStateOf(true) }
     LaunchedEffect(Unit) {
@@ -85,6 +87,7 @@ fun CartioApp(
     }
     val preferences by settingsViewModel.settings.collectAsStateWithLifecycle()
     val dark = when (preferences.theme) { ThemePreference.DARK -> true; ThemePreference.LIGHT -> false; ThemePreference.SYSTEM -> isSystemInDarkTheme() }
+    SideEffect { onDarkThemeChanged(dark) }
     CartioTheme(darkTheme = dark) {
         CompositionLocalProvider(LocalStrings provides strings(preferences.language)) {
             val nav = rememberNavController()
