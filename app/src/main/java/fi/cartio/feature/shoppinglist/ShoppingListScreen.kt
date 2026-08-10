@@ -94,11 +94,13 @@ import fi.cartio.core.localization.LocalStrings
 import fi.cartio.core.designsystem.categoryIcon
 import fi.cartio.core.designsystem.productIcon
 import fi.cartio.core.designsystem.CartioScreenHeader
+import fi.cartio.core.designsystem.SavedListIconPicker
 import fi.cartio.core.localization.categoryName
 import fi.cartio.core.model.ProductCategory
 import fi.cartio.core.model.ShoppingItem
 import fi.cartio.core.model.ActiveShoppingList
 import fi.cartio.core.model.SavedShoppingList
+import fi.cartio.core.model.SavedListIcon
 import fi.cartio.core.model.formatQuantity
 import fi.cartio.ui.theme.CartioTheme
 import fi.cartio.R
@@ -131,7 +133,7 @@ fun ShoppingListRoute(viewModel: ShoppingListViewModel, contentPadding: PaddingV
         SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).padding(bottom = contentPadding.calculateBottomPadding() + 76.dp))
     }
     editing?.let { item -> ProductEditorSheet(item, onDismiss = { editing = null }, onSave = { viewModel.update(it); editing = null }) }
-    if (creatingList) CreateListSheet(onDismiss = { creatingList = false }, onCreate = { viewModel.createList(it); creatingList = false })
+    if (creatingList) CreateListSheet(onDismiss = { creatingList = false }, onCreate = { name, icon -> viewModel.createList(name, icon); creatingList = false })
     if (switchingList) SwitchListSheet(
         active = state.activeList,
         lists = state.savedLists,
@@ -216,6 +218,7 @@ private fun ActiveListCard(active: ActiveShoppingList, onSwitch: () -> Unit) {
         elevation = CardDefaults.cardElevation(0.dp),
     ) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(active.icon.symbol, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(end = 12.dp))
             Column(Modifier.weight(1f)) {
                 Text(strings.currentList, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                 Text(active.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -228,14 +231,18 @@ private fun ActiveListCard(active: ActiveShoppingList, onSwitch: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun CreateListSheet(onDismiss: () -> Unit, onCreate: (String) -> Unit) {
+private fun CreateListSheet(onDismiss: () -> Unit, onCreate: (String, SavedListIcon) -> Unit) {
     var name by remember { mutableStateOf("") }
+    var icon by remember { mutableStateOf(SavedListIcon.CART) }
     val strings = LocalStrings.current
     ModalBottomSheet(onDismissRequest = onDismiss, shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)) {
         Column(Modifier.fillMaxWidth().imePadding().padding(horizontal = 20.dp, vertical = 8.dp).padding(bottom = 24.dp)) {
             Text(strings.createNewList, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 16.dp))
-            OutlinedTextField(name, { name = it }, label = { Text(strings.listName) }, singleLine = true, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth().testTag("new_list_name"))
-            Button(onClick = { onCreate(name.trim()) }, enabled = name.isNotBlank(), shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth().padding(top = 12.dp).height(54.dp).testTag("confirm_create_list")) { Text(strings.createList) }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                SavedListIconPicker(icon, strings.listIcon) { icon = it }
+                OutlinedTextField(name, { name = it }, label = { Text(strings.listName) }, singleLine = true, shape = RoundedCornerShape(16.dp), modifier = Modifier.weight(1f).testTag("new_list_name"))
+            }
+            Button(onClick = { onCreate(name.trim(), icon) }, enabled = name.isNotBlank(), shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth().padding(top = 12.dp).height(54.dp).testTag("confirm_create_list")) { Text(strings.createList) }
             TextButton(onClick = onDismiss, modifier = Modifier.align(Alignment.CenterHorizontally)) { Text(strings.cancel) }
         }
     }
@@ -258,6 +265,7 @@ private fun SwitchListSheet(active: ActiveShoppingList?, lists: List<SavedShoppi
                     modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
                 ) {
                     Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text(list.icon.symbol, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(end = 12.dp))
                         Column(Modifier.weight(1f)) {
                             Text(list.name, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                             val itemCount = if (selected) active.itemCount else list.itemCount

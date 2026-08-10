@@ -18,7 +18,7 @@ import javax.inject.Singleton
 
 @Module @InstallIn(SingletonComponent::class)
 object DatabaseModule {
-    @Provides @Singleton fun database(@ApplicationContext context: Context): CartioDatabase = Room.databaseBuilder(context, CartioDatabase::class.java, "cartio.db").addMigrations(CartioDatabase.MIGRATION_1_2, CartioDatabase.MIGRATION_2_3).build()
+    @Provides @Singleton fun database(@ApplicationContext context: Context): CartioDatabase = Room.databaseBuilder(context, CartioDatabase::class.java, "cartio.db").addMigrations(CartioDatabase.MIGRATION_1_2, CartioDatabase.MIGRATION_2_3, CartioDatabase.MIGRATION_3_4).build()
     @Provides fun dao(database: CartioDatabase): CartioDao = database.dao()
 }
 

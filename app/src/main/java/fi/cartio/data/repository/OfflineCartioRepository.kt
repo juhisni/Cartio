@@ -6,6 +6,7 @@ import fi.cartio.core.model.AppLanguage
 import fi.cartio.core.model.ActiveShoppingList
 import fi.cartio.core.model.SavedShoppingList
 import fi.cartio.core.model.SavedListSnapshot
+import fi.cartio.core.model.SavedListIcon
 import fi.cartio.core.model.ShoppingItem
 import fi.cartio.data.local.CartioDao
 import fi.cartio.data.local.LearnedProductCategoryEntity
@@ -23,13 +24,13 @@ import javax.inject.Inject
 class OfflineCartioRepository @Inject constructor(private val dao: CartioDao, private val engine: CategorySuggestionEngine) : CartioRepository {
     override val items: Flow<List<ShoppingItem>> = dao.observeItems().map { list -> list.map { it.model() } }
     override val savedLists: Flow<List<SavedShoppingList>> = dao.observeSavedLists().map { lists ->
-        lists.map { SavedShoppingList(it.id, it.name, it.itemCount, it.createdAt, it.completedCount) }
+        lists.map { SavedShoppingList(it.id, it.name, it.itemCount, it.createdAt, it.completedCount, it.icon) }
     }
     override val activeList: Flow<ActiveShoppingList?> = combine(dao.observeActiveList(), items) { active, currentItems ->
-        active?.let { ActiveShoppingList(it.savedListId, it.name, currentItems.size, currentItems.count(ShoppingItem::checked)) }
+        active?.let { ActiveShoppingList(it.savedListId, it.name, currentItems.size, currentItems.count(ShoppingItem::checked), it.icon) }
     }
 
-    override suspend fun createList(name: String) { dao.createAndActivateList(name.trim()) }
+    override suspend fun createList(name: String, icon: SavedListIcon) { dao.createAndActivateList(name.trim(), icon) }
     override suspend fun activateList(id: Long) { dao.activateSavedList(id) }
 
     override suspend fun add(name: String): ShoppingItem {
@@ -62,19 +63,19 @@ class OfflineCartioRepository @Inject constructor(private val dao: CartioDao, pr
     }
     override suspend fun save(name: String) { dao.saveCurrent(name.trim()) }
     override suspend fun restore(id: Long) = dao.activateSavedList(id)
-    override suspend fun rename(id: Long, name: String) = dao.renameList(id, name.trim())
+    override suspend fun updateList(id: Long, name: String, icon: SavedListIcon) = dao.updateList(id, name.trim(), icon)
     override suspend fun deleteSaved(id: Long): SavedListSnapshot? {
         val deleted = dao.deleteSavedSnapshot(id) ?: return null
         val list = deleted.list
         val items = deleted.items
         return SavedListSnapshot(
-            SavedShoppingList(list.id, list.name, items.size, list.createdAt, items.count { it.checked }),
+            SavedShoppingList(list.id, list.name, items.size, list.createdAt, items.count { it.checked }, list.icon),
             items.map { ShoppingItem(it.id, it.name, it.normalizedName, it.quantity, it.unit, it.category, it.checked, sortOrder = it.sortOrder) },
         )
     }
     override suspend fun restoreSaved(snapshot: SavedListSnapshot) {
         dao.restoreSavedList(
-            SavedShoppingListEntity(snapshot.list.id, snapshot.list.name, snapshot.list.createdAt),
+            SavedShoppingListEntity(snapshot.list.id, snapshot.list.name, snapshot.list.createdAt, snapshot.list.icon),
             snapshot.items.map { SavedShoppingListItemEntity(id = it.id, listId = snapshot.list.id, name = it.name, normalizedName = it.normalizedName, quantity = it.quantity, unit = it.unit, category = it.category, checked = it.checked, sortOrder = it.sortOrder) },
         )
     }

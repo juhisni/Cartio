@@ -58,7 +58,9 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import fi.cartio.core.localization.LocalStrings
 import fi.cartio.core.designsystem.CartioScreenHeader
+import fi.cartio.core.designsystem.SavedListIconPicker
 import fi.cartio.core.model.SavedShoppingList
+import fi.cartio.core.model.SavedListIcon
 
 @Composable
 fun SavedListsRoute(contentPadding: PaddingValues, onRestored: () -> Unit, viewModel: SavedListsViewModel = hiltViewModel()) {
@@ -117,7 +119,20 @@ fun SavedListsRoute(contentPadding: PaddingValues, onRestored: () -> Unit, viewM
         }
         SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).padding(bottom = contentPadding.calculateBottomPadding() + 16.dp))
     }
-    dialog?.let { state -> NameDialog(initial = (state as? DialogState.Rename)?.list?.name.orEmpty(), title = if (state is DialogState.Save) strings.createNewList else strings.rename, onDismiss = { dialog = null }, onConfirm = { name -> if (state is DialogState.Save) { viewModel.create(name); onRestored() } else viewModel.rename((state as DialogState.Rename).list.id, name); dialog = null }) }
+    dialog?.let { state ->
+        val existing = (state as? DialogState.Rename)?.list
+        NameDialog(
+            initial = existing?.name.orEmpty(),
+            initialIcon = existing?.icon ?: SavedListIcon.CART,
+            title = if (state is DialogState.Save) strings.createNewList else strings.rename,
+            onDismiss = { dialog = null },
+            onConfirm = { name, icon ->
+                if (state is DialogState.Save) { viewModel.create(name, icon); onRestored() }
+                else viewModel.update((state as DialogState.Rename).list.id, name, icon)
+                dialog = null
+            },
+        )
+    }
 }
 
 @Composable
@@ -126,7 +141,7 @@ private fun SavedListCard(list: SavedShoppingList, isActive: Boolean, onRestore:
     val strings = LocalStrings.current
     Card(Modifier.fillMaxWidth().padding(horizontal = 20.dp), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
         Row(Modifier.fillMaxWidth().padding(start = 12.dp, top = 12.dp, bottom = 12.dp, end = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(48.dp).background(MaterialTheme.colorScheme.primary.copy(alpha = .14f), RoundedCornerShape(14.dp)), contentAlignment = Alignment.Center) { Icon(Icons.Outlined.ShoppingCart, null, tint = MaterialTheme.colorScheme.primary) }
+            Box(Modifier.size(48.dp).background(MaterialTheme.colorScheme.primary.copy(alpha = .14f), RoundedCornerShape(14.dp)), contentAlignment = Alignment.Center) { Text(list.icon.symbol, style = MaterialTheme.typography.titleLarge) }
             Column(Modifier.weight(1f).padding(start = 12.dp)) {
                 Text(list.name, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 Text(strings.itemCount.format(list.itemCount), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -148,7 +163,24 @@ private fun SavedListCard(list: SavedShoppingList, isActive: Boolean, onRestore:
 private sealed interface DialogState { data object Save : DialogState; data class Rename(val list: SavedShoppingList) : DialogState }
 
 @Composable
-private fun NameDialog(initial: String, title: String, onDismiss: () -> Unit, onConfirm: (String) -> Unit) {
-    var name by remember { mutableStateOf(initial) }; val strings = LocalStrings.current
-    AlertDialog(onDismissRequest = onDismiss, shape = RoundedCornerShape(24.dp), title = { Text(title) }, text = { OutlinedTextField(name, { name = it }, label = { Text(strings.listName) }, singleLine = true, shape = RoundedCornerShape(14.dp)) }, confirmButton = { TextButton(enabled = name.isNotBlank(), onClick = { onConfirm(name) }) { Text(strings.save) } }, dismissButton = { TextButton(onClick = onDismiss) { Text(strings.cancel) } })
+private fun NameDialog(initial: String, initialIcon: SavedListIcon, title: String, onDismiss: () -> Unit, onConfirm: (String, SavedListIcon) -> Unit) {
+    var name by remember { mutableStateOf(initial) }
+    var icon by remember { mutableStateOf(initialIcon) }
+    val strings = LocalStrings.current
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        shape = RoundedCornerShape(24.dp),
+        containerColor = MaterialTheme.colorScheme.surface,
+        title = { Text(title) },
+        text = {
+            Column {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                    SavedListIconPicker(icon, strings.listIcon) { icon = it }
+                    OutlinedTextField(name, { name = it }, label = { Text(strings.listName) }, singleLine = true, shape = RoundedCornerShape(14.dp), modifier = Modifier.weight(1f))
+                }
+            }
+        },
+        confirmButton = { TextButton(enabled = name.isNotBlank(), onClick = { onConfirm(name, icon) }) { Text(strings.save) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(strings.cancel) } },
+    )
 }

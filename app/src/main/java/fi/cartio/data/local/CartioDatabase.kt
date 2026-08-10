@@ -7,13 +7,16 @@ import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import fi.cartio.core.model.ProductCategory
+import fi.cartio.core.model.SavedListIcon
 
 class Converters {
     @TypeConverter fun category(value: String) = ProductCategory.valueOf(value)
     @TypeConverter fun category(value: ProductCategory) = value.name
+    @TypeConverter fun listIcon(value: String) = SavedListIcon.valueOf(value)
+    @TypeConverter fun listIcon(value: SavedListIcon) = value.name
 }
 
-@Database(entities = [ShoppingItemEntity::class, SavedShoppingListEntity::class, SavedShoppingListItemEntity::class, ActiveShoppingListEntity::class, LearnedProductCategoryEntity::class, ProductUsageEntity::class], version = 3, exportSchema = true)
+@Database(entities = [ShoppingItemEntity::class, SavedShoppingListEntity::class, SavedShoppingListItemEntity::class, ActiveShoppingListEntity::class, LearnedProductCategoryEntity::class, ProductUsageEntity::class], version = 4, exportSchema = true)
 @TypeConverters(Converters::class)
 abstract class CartioDatabase : RoomDatabase() {
     abstract fun dao(): CartioDao
@@ -33,6 +36,12 @@ abstract class CartioDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE `saved_list_items` ADD COLUMN `sortOrder` INTEGER NOT NULL DEFAULT 0")
                 db.execSQL("UPDATE `shopping_items` SET `sortOrder` = `id`")
                 db.execSQL("UPDATE `saved_list_items` SET `sortOrder` = `id`")
+            }
+        }
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `saved_lists` ADD COLUMN `icon` TEXT NOT NULL DEFAULT 'CART'")
+                db.execSQL("ALTER TABLE `active_list` ADD COLUMN `icon` TEXT NOT NULL DEFAULT 'CART'")
             }
         }
     }

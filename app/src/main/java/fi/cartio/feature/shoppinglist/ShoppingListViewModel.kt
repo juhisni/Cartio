@@ -9,6 +9,7 @@ import fi.cartio.core.model.ShoppingItem
 import fi.cartio.core.model.AppLanguage
 import fi.cartio.core.model.ActiveShoppingList
 import fi.cartio.core.model.SavedShoppingList
+import fi.cartio.core.model.SavedListIcon
 import fi.cartio.domain.repository.CartioRepository
 import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
@@ -72,7 +73,7 @@ class ShoppingListViewModel @Inject constructor(private val repository: CartioRe
     init { refreshHistory() }
     fun setQuery(value: String) { query.value = value }
     fun setLanguage(value: AppLanguage) { language.value = value }
-    fun createList(name: String) { if (name.isNotBlank()) viewModelScope.launch { repository.createList(name) } }
+    fun createList(name: String, icon: SavedListIcon = SavedListIcon.CART) { if (name.isNotBlank()) viewModelScope.launch { repository.createList(name, icon) } }
     fun activateList(id: Long) { viewModelScope.launch { repository.activateList(id) } }
     fun add(name: String = query.value) {
         if (name.isBlank()) return

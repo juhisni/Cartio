@@ -6,6 +6,7 @@ import fi.cartio.core.model.ProductCategory
 import fi.cartio.core.model.ProductSuggestion
 import fi.cartio.core.model.SavedShoppingList
 import fi.cartio.core.model.ShoppingItem
+import fi.cartio.core.model.SavedListIcon
 import fi.cartio.domain.repository.CartioRepository
 import fi.cartio.feature.shoppinglist.ShoppingListViewModel
 import kotlinx.coroutines.Dispatchers
@@ -86,7 +87,7 @@ private class FakeRepository : CartioRepository {
     override val items = mutableItems
     override val savedLists = MutableStateFlow<List<SavedShoppingList>>(emptyList())
     override val activeList = MutableStateFlow<ActiveShoppingList?>(ActiveShoppingList(1, "Test list", 0, 0))
-    override suspend fun createList(name: String) = Unit
+    override suspend fun createList(name: String, icon: SavedListIcon) = Unit
     override suspend fun activateList(id: Long) = Unit
     override suspend fun add(name: String): ShoppingItem {
         val category = if (name.lowercase() == "leipä") ProductCategory.BREAD_GRAINS else ProductCategory.DAIRY
@@ -97,7 +98,7 @@ private class FakeRepository : CartioRepository {
     override suspend fun reorder(items: List<ShoppingItem>) { mutableItems.value = items }
     override suspend fun remove(id: Long) { mutableItems.value = emptyList() }
     override suspend fun restoreItem(item: ShoppingItem) { mutableItems.value = listOf(item) }
-    override suspend fun save(name: String) = Unit; override suspend fun restore(id: Long) = Unit; override suspend fun rename(id: Long, name: String) = Unit
+    override suspend fun save(name: String) = Unit; override suspend fun restore(id: Long) = Unit; override suspend fun updateList(id: Long, name: String, icon: SavedListIcon) = Unit
     override suspend fun deleteSaved(id: Long): fi.cartio.core.model.SavedListSnapshot? = null
     override suspend fun restoreSaved(snapshot: fi.cartio.core.model.SavedListSnapshot) = Unit
     override suspend fun learn(name: String, category: ProductCategory) = Unit

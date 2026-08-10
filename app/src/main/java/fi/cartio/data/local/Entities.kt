@@ -5,12 +5,13 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import fi.cartio.core.model.ProductCategory
+import fi.cartio.core.model.SavedListIcon
 
 @Entity(tableName = "shopping_items", indices = [Index("normalizedName")])
 data class ShoppingItemEntity(@PrimaryKey(autoGenerate = true) val id: Long = 0, val name: String, val normalizedName: String, val quantity: Double?, val unit: String?, val category: ProductCategory, val checked: Boolean, val createdAt: Long, val updatedAt: Long, val sortOrder: Int = 0)
 
 @Entity(tableName = "saved_lists")
-data class SavedShoppingListEntity(@PrimaryKey(autoGenerate = true) val id: Long = 0, val name: String, val createdAt: Long)
+data class SavedShoppingListEntity(@PrimaryKey(autoGenerate = true) val id: Long = 0, val name: String, val createdAt: Long, val icon: SavedListIcon = SavedListIcon.CART)
 
 data class SavedShoppingListSummary(
     val id: Long,
@@ -18,6 +19,7 @@ data class SavedShoppingListSummary(
     val createdAt: Long,
     val itemCount: Int,
     val completedCount: Int,
+    val icon: SavedListIcon,
 )
 
 @Entity(tableName = "active_list")
@@ -26,6 +28,7 @@ data class ActiveShoppingListEntity(
     val savedListId: Long,
     val name: String,
     val createdAt: Long,
+    val icon: SavedListIcon = SavedListIcon.CART,
 )
 
 @Entity(tableName = "saved_list_items", foreignKeys = [ForeignKey(entity = SavedShoppingListEntity::class, parentColumns = ["id"], childColumns = ["listId"], onDelete = ForeignKey.CASCADE)], indices = [Index("listId")])

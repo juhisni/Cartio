@@ -7,6 +7,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import fi.cartio.core.model.AppLanguage
 import fi.cartio.core.model.ProductCategory
 import fi.cartio.core.model.ProductSuggestion
+import fi.cartio.core.model.SavedListIcon
 import fi.cartio.data.local.CartioDatabase
 import fi.cartio.data.local.LearnedProductCategoryEntity
 import fi.cartio.data.local.ShoppingItemEntity
@@ -76,8 +77,9 @@ class CartioDatabaseTest {
         assertEquals("Milk", dao.observeItems().first().single().name)
         assertEquals("Weekly groceries", dao.observeActiveList().first()?.name)
 
-        dao.renameList(weeklyId, "Every week")
+        dao.updateList(weeklyId, "Every week", SavedListIcon.HOME)
         assertEquals("Every week", dao.observeActiveList().first()?.name)
+        assertEquals(SavedListIcon.HOME, dao.observeActiveList().first()?.icon)
         assertEquals(2, dao.observeSavedLists().first().size)
     }
     @Test fun englishAndFinnishQueriesProvideOneTapSuggestions() {

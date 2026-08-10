@@ -43,9 +43,12 @@ class PolishedNavigationTest {
         rule.onNodeWithText("What would you like to do?").assertIsDisplayed()
         rule.onNodeWithTag("create_new_list").performClick()
         rule.onNodeWithTag("new_list_name").performTextInput("Weekly groceries")
+        rule.onNodeWithTag("list_icon_selector").performClick()
+        rule.onNodeWithTag("list_icon_party").performClick()
         rule.onNodeWithTag("confirm_create_list").performClick()
 
         rule.onNodeWithTag("active_list_card").assertIsDisplayed()
         rule.onNodeWithText("Weekly groceries").assertIsDisplayed()
+        rule.onNodeWithText("🎉").assertIsDisplayed()
     }
 }

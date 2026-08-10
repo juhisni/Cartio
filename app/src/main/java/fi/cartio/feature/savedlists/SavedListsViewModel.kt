@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import fi.cartio.core.model.SavedShoppingList
 import fi.cartio.core.model.SavedListSnapshot
+import fi.cartio.core.model.SavedListIcon
 import fi.cartio.domain.repository.CartioRepository
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
@@ -31,9 +32,9 @@ class SavedListsViewModel @Inject constructor(private val repository: CartioRepo
     val deletions = deletionChannel.receiveAsFlow()
     fun setQuery(value: String) { query.value = value }
     fun save(name: String) { if (name.isNotBlank()) viewModelScope.launch { repository.save(name) } }
-    fun create(name: String) { if (name.isNotBlank()) viewModelScope.launch { repository.createList(name) } }
+    fun create(name: String, icon: SavedListIcon) { if (name.isNotBlank()) viewModelScope.launch { repository.createList(name, icon) } }
     fun restore(id: Long) { viewModelScope.launch { repository.restore(id) } }
-    fun rename(id: Long, name: String) { if (name.isNotBlank()) viewModelScope.launch { repository.rename(id, name) } }
+    fun update(id: Long, name: String, icon: SavedListIcon) { if (name.isNotBlank()) viewModelScope.launch { repository.updateList(id, name, icon) } }
     fun delete(id: Long) { viewModelScope.launch { repository.deleteSaved(id)?.let { deletionChannel.send(it) } } }
     fun undoDelete(snapshot: SavedListSnapshot) { viewModelScope.launch { repository.restoreSaved(snapshot) } }
 }

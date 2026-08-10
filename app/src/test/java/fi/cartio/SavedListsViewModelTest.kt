@@ -7,6 +7,7 @@ import fi.cartio.core.model.ProductSuggestion
 import fi.cartio.core.model.SavedListSnapshot
 import fi.cartio.core.model.SavedShoppingList
 import fi.cartio.core.model.ShoppingItem
+import fi.cartio.core.model.SavedListIcon
 import fi.cartio.domain.repository.CartioRepository
 import fi.cartio.feature.savedlists.SavedListsViewModel
 import kotlinx.coroutines.Dispatchers
@@ -64,7 +65,7 @@ private class SavedListsFakeRepository : CartioRepository {
         SavedShoppingList(2, "Juhlat", 8, 2),
     ))
     override val activeList = MutableStateFlow<ActiveShoppingList?>(null)
-    override suspend fun createList(name: String) = Unit
+    override suspend fun createList(name: String, icon: SavedListIcon) = Unit
     override suspend fun activateList(id: Long) = Unit
     override suspend fun add(name: String) = error("Not used")
     override suspend fun toggle(item: ShoppingItem) = Unit
@@ -74,7 +75,7 @@ private class SavedListsFakeRepository : CartioRepository {
     override suspend fun restoreItem(item: ShoppingItem) = Unit
     override suspend fun save(name: String) = Unit
     override suspend fun restore(id: Long) = Unit
-    override suspend fun rename(id: Long, name: String) = Unit
+    override suspend fun updateList(id: Long, name: String, icon: SavedListIcon) = Unit
     override suspend fun deleteSaved(id: Long): SavedListSnapshot? = null
     override suspend fun restoreSaved(snapshot: SavedListSnapshot) = Unit
     override suspend fun learn(name: String, category: ProductCategory) = Unit

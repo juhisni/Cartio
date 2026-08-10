@@ -7,6 +7,7 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
+import fi.cartio.core.model.SavedListIcon
 
 @Dao
 interface CartioDao {
@@ -21,12 +22,12 @@ interface CartioDao {
     @Query("SELECT * FROM shopping_items") suspend fun getItems(): List<ShoppingItemEntity>
 
     @Query(
-        """SELECT lists.id, lists.name, lists.createdAt,
+        """SELECT lists.id, lists.name, lists.createdAt, lists.icon,
             COUNT(items.id) AS itemCount,
             COALESCE(SUM(CASE WHEN items.checked = 1 THEN 1 ELSE 0 END), 0) AS completedCount
             FROM saved_lists AS lists
             LEFT JOIN saved_list_items AS items ON items.listId = lists.id
-            GROUP BY lists.id, lists.name, lists.createdAt
+            GROUP BY lists.id, lists.name, lists.createdAt, lists.icon
             ORDER BY lists.createdAt DESC""",
     )
     fun observeSavedLists(): Flow<List<SavedShoppingListSummary>>
@@ -35,7 +36,7 @@ interface CartioDao {
     @Insert suspend fun insertSavedList(list: SavedShoppingListEntity): Long
     @Insert suspend fun insertSavedItems(items: List<SavedShoppingListItemEntity>)
     @Query("SELECT * FROM saved_list_items WHERE listId = :id") suspend fun getSavedItems(id: Long): List<SavedShoppingListItemEntity>
-    @Query("UPDATE saved_lists SET name = :name WHERE id = :id") suspend fun renameSavedList(id: Long, name: String)
+    @Query("UPDATE saved_lists SET name = :name, icon = :icon WHERE id = :id") suspend fun updateSavedList(id: Long, name: String, icon: SavedListIcon)
     @Query("DELETE FROM saved_lists WHERE id = :id") suspend fun deleteSavedList(id: Long)
     @Query("DELETE FROM saved_list_items WHERE listId = :id") suspend fun deleteSavedItems(id: Long)
 
@@ -67,12 +68,12 @@ interface CartioDao {
         insertSavedItems(getItems().map { SavedShoppingListItemEntity(listId = active.savedListId, name = it.name, normalizedName = it.normalizedName, quantity = it.quantity, unit = it.unit, category = it.category, checked = it.checked, sortOrder = it.sortOrder) })
     }
 
-    @Transaction suspend fun createAndActivateList(name: String): Long {
+    @Transaction suspend fun createAndActivateList(name: String, icon: SavedListIcon = SavedListIcon.CART): Long {
         syncCurrentToActiveList()
         val now = System.currentTimeMillis()
-        val id = insertSavedList(SavedShoppingListEntity(name = name, createdAt = now))
+        val id = insertSavedList(SavedShoppingListEntity(name = name, createdAt = now, icon = icon))
         clearItems()
-        upsertActiveList(ActiveShoppingListEntity(savedListId = id, name = name, createdAt = now))
+        upsertActiveList(ActiveShoppingListEntity(savedListId = id, name = name, createdAt = now, icon = icon))
         return id
     }
 
@@ -82,7 +83,7 @@ interface CartioDao {
         clearItems()
         val now = System.currentTimeMillis()
         getSavedItems(id).forEach { insertItem(ShoppingItemEntity(name = it.name, normalizedName = it.normalizedName, quantity = it.quantity, unit = it.unit, category = it.category, checked = it.checked, createdAt = now, updatedAt = now, sortOrder = it.sortOrder)) }
-        upsertActiveList(ActiveShoppingListEntity(savedListId = id, name = list.name, createdAt = list.createdAt))
+        upsertActiveList(ActiveShoppingListEntity(savedListId = id, name = list.name, createdAt = list.createdAt, icon = list.icon))
     }
 
     @Transaction suspend fun restoreSavedList(list: SavedShoppingListEntity, items: List<SavedShoppingListItemEntity>) {
@@ -101,9 +102,9 @@ interface CartioDao {
         return SavedListEntitySnapshot(list, items)
     }
 
-    @Transaction suspend fun renameList(id: Long, name: String) {
-        renameSavedList(id, name)
-        getActiveList()?.takeIf { it.savedListId == id }?.let { upsertActiveList(it.copy(name = name)) }
+    @Transaction suspend fun updateList(id: Long, name: String, icon: SavedListIcon) {
+        updateSavedList(id, name, icon)
+        getActiveList()?.takeIf { it.savedListId == id }?.let { upsertActiveList(it.copy(name = name, icon = icon)) }
     }
 
     @Transaction suspend fun reorderCurrent(items: List<ShoppingItemEntity>) {

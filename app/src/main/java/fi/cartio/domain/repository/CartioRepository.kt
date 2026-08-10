@@ -7,13 +7,14 @@ import fi.cartio.core.model.ActiveShoppingList
 import fi.cartio.core.model.SavedShoppingList
 import fi.cartio.core.model.SavedListSnapshot
 import fi.cartio.core.model.ShoppingItem
+import fi.cartio.core.model.SavedListIcon
 import kotlinx.coroutines.flow.Flow
 
 interface CartioRepository {
     val items: Flow<List<ShoppingItem>>
     val savedLists: Flow<List<SavedShoppingList>>
     val activeList: Flow<ActiveShoppingList?>
-    suspend fun createList(name: String)
+    suspend fun createList(name: String, icon: SavedListIcon)
     suspend fun activateList(id: Long)
     suspend fun add(name: String): ShoppingItem
     suspend fun toggle(item: ShoppingItem)
@@ -23,7 +24,7 @@ interface CartioRepository {
     suspend fun restoreItem(item: ShoppingItem)
     suspend fun save(name: String)
     suspend fun restore(id: Long)
-    suspend fun rename(id: Long, name: String)
+    suspend fun updateList(id: Long, name: String, icon: SavedListIcon)
     suspend fun deleteSaved(id: Long): SavedListSnapshot?
     suspend fun restoreSaved(snapshot: SavedListSnapshot)
     suspend fun learn(name: String, category: ProductCategory)
