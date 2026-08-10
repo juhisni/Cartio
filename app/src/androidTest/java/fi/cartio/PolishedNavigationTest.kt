@@ -21,7 +21,7 @@ class PolishedNavigationTest {
         rule.onNodeWithTag("saved_create_new_list").assertIsDisplayed()
 
         rule.onNodeWithText("Settings").performClick()
-        rule.onNodeWithText("Fast, calm, and completely offline.").assertIsDisplayed()
+        rule.onNodeWithText("Privacy & data").assertIsDisplayed()
     }
 
     @Test fun mainNavigationReturnsFromSavedListsOpenedFromStartScreen() {
