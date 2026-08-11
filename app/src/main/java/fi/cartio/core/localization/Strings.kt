@@ -30,6 +30,8 @@ data class CartioStrings(
     val permissionsBody: String, val versionFormat: String,
     val developerAndSupport: String, val developedBy: String, val contactSupport: String,
     val privacyPolicy: String, val privacyPolicyBody: String,
+    val legalAndLicenses: String, val copyrightNotice: String, val allRightsReserved: String,
+    val legalNotices: String, val legalNoticesBody: String,
 )
 
 val LocalStrings = staticCompositionLocalOf { strings(AppLanguage.ENGLISH) }
@@ -46,7 +48,9 @@ fun strings(language: AppLanguage) = if (language == AppLanguage.FINNISH) Cartio
     "Ei käyttäjätiliä, mainoksia, analytiikkaa tai verkkoyhteyttä. Cartio ei lähetä listojasi minnekään.", "Tallennettu laitteelle", "Listat, asetukset ja tuotehistoria tallennetaan paikallisesti laitteellesi.",
     "Android-varmuuskopio", "Laitteesi asetuksista riippuen Android voi sisällyttää Cartion tiedot järjestelmän varmuuskopioihin tai laitteiden väliseen siirtoon.", "Käyttöoikeudet", "Cartio ei tällä hetkellä pyydä laitteesi käyttöoikeuksia.", "Versio %s (%d)",
     "Kehittäjä ja tuki", "Kehittäjä", "Ota yhteyttä tukeen",
-    "Tietosuojakäytäntö", "Lue Cartion tietosuojakäytäntö"
+    "Tietosuojakäytäntö", "Lue Cartion tietosuojakäytäntö",
+    "Lakiasiat ja lisenssit", "© 2026 Juha-Matti Niiranen", "Kaikki oikeudet pidätetään.",
+    "Lisenssitiedot", "Avoimen lähdekoodin ohjelmistot ja aineistojen käyttöehdot"
 ) else CartioStrings(
     "Shopping list", "Main", "Saved", "Settings", "Add product", "Search or type a product",
     "Recently added", "Frequently added", "Your list is empty", "Add your first product quickly with the plus button.",
@@ -60,7 +64,9 @@ fun strings(language: AppLanguage) = if (language == AppLanguage.FINNISH) Cartio
     "No account, ads, analytics, or network access. Cartio does not send your lists anywhere.", "Stored on your device", "Lists, preferences, and product history are stored locally on your device.",
     "Android backup", "Depending on your device settings, Android may include Cartio data in system backups or device transfers.", "Permissions", "Cartio currently requests no device permissions.", "Version %s (%d)",
     "Developer & support", "Developed by", "Contact support",
-    "Privacy policy", "Read Cartio's privacy policy"
+    "Privacy policy", "Read Cartio's privacy policy",
+    "Legal & licenses", "© 2026 Juha-Matti Niiranen", "All rights reserved.",
+    "License notices", "Open-source software and data licensing terms"
 )
 
 @Composable fun categoryName(category: ProductCategory): String {

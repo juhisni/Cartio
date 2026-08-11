@@ -50,3 +50,7 @@ $env:JAVA_HOME='C:\Program Files\Android\Android Studio\jbr'
 The bilingual privacy policy is published with GitHub Pages from the `docs` directory:
 
 <https://juhisni.github.io/Cartio/privacy/>
+
+Legal and license notices are published at:
+
+<https://juhisni.github.io/Cartio/legal/>

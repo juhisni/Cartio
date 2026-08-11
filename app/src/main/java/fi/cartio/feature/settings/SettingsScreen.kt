@@ -22,6 +22,7 @@ import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Policy
+import androidx.compose.material.icons.outlined.Gavel
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -103,6 +104,12 @@ fun SettingsRoute(viewModel: SettingsViewModel, contentPadding: PaddingValues) {
                 AboutInfoRow(Icons.Outlined.Save, strings.localStorage, strings.localStorageBody)
                 AboutInfoRow(Icons.Outlined.Save, strings.androidBackup, strings.androidBackupBody)
                 AboutInfoRow(Icons.Outlined.CheckCircle, strings.permissions, strings.permissionsBody)
+                HorizontalDivider(Modifier.padding(horizontal = 16.dp, vertical = 12.dp), color = MaterialTheme.colorScheme.outlineVariant)
+                Text(strings.legalAndLicenses, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
+                AboutInfoRow(Icons.Outlined.Gavel, strings.copyrightNotice, strings.allRightsReserved)
+                AboutInfoRow(Icons.Outlined.Policy, strings.legalNotices, strings.legalNoticesBody) {
+                    uriHandler.openUri("https://juhisni.github.io/Cartio/legal/")
+                }
             }
         }
     }
