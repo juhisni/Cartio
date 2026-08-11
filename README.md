@@ -54,3 +54,5 @@ The bilingual privacy policy is published with GitHub Pages from the `docs` dire
 Legal and license notices are published at:
 
 <https://juhisni.github.io/Cartio/legal/>
+
+The audited Google Play Data safety answers are documented in [`docs/PLAY_CONSOLE_DATA_SAFETY.md`](docs/PLAY_CONSOLE_DATA_SAFETY.md).
