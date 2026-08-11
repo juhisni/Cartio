@@ -60,3 +60,5 @@ The audited Google Play Data safety answers are documented in [`docs/PLAY_CONSOL
 Target-audience and IARC content-rating answers are documented in [`docs/PLAY_CONSOLE_AUDIENCE_AND_RATING.md`](docs/PLAY_CONSOLE_AUDIENCE_AND_RATING.md).
 
 Pricing and distribution decisions are documented in [`docs/PLAY_CONSOLE_PRICING_AND_DISTRIBUTION.md`](docs/PLAY_CONSOLE_PRICING_AND_DISTRIBUTION.md).
+
+Draft English and Finnish Google Play metadata is maintained in [`docs/PLAY_STORE_LISTING.md`](docs/PLAY_STORE_LISTING.md).
