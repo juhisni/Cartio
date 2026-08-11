@@ -9,8 +9,10 @@ import fi.cartio.core.model.ShoppingItem
 import fi.cartio.core.model.AppLanguage
 import fi.cartio.core.model.ActiveShoppingList
 import fi.cartio.core.model.SavedShoppingList
+import fi.cartio.core.model.SavedListSnapshot
 import fi.cartio.core.model.SavedListIcon
 import fi.cartio.domain.repository.CartioRepository
+import fi.cartio.domain.suggestion.normalizeProductInput
 import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,6 +41,9 @@ data class ShoppingListUiState(
     val canAddQuery: Boolean = false,
 )
 
+enum class BulkListAction { MARKED_INCOMPLETE, REMOVED_COMPLETED }
+data class BulkListChange(val action: BulkListAction, val previousItems: List<ShoppingItem>)
+
 @HiltViewModel
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 class ShoppingListViewModel @Inject constructor(private val repository: CartioRepository) : ViewModel() {
@@ -53,7 +58,7 @@ class ShoppingListViewModel @Inject constructor(private val repository: CartioRe
     private val listContext = combine(repository.items, repository.activeList, repository.savedLists) { items, active, saved -> Triple(items, active, saved) }
     val state: StateFlow<ShoppingListUiState> = combine(listContext, query, history, suggestions) { context, text, usage, matches ->
         val existing = context.first.map { it.normalizedName }.toSet()
-        fun available(values: List<ProductSuggestion>) = values.filterNot { it.name.trim().lowercase() in existing }
+        fun available(values: List<ProductSuggestion>) = values.filterNot { normalizeProductInput(it.name) in existing }
         ShoppingListUiState(
             groupedItems = context.first.groupBy { it.category },
             query = text,
@@ -62,13 +67,17 @@ class ShoppingListViewModel @Inject constructor(private val repository: CartioRe
             frequent = available(usage.second),
             activeList = context.second,
             savedLists = context.third,
-            canAddQuery = text.isNotBlank() && text.trim().lowercase() !in existing,
+            canAddQuery = text.isNotBlank() && normalizeProductInput(text) !in existing,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ShoppingListUiState())
     private val feedbackChannel = Channel<String>(Channel.BUFFERED)
     val feedback = feedbackChannel.receiveAsFlow()
     private val removalChannel = Channel<ShoppingItem>(Channel.BUFFERED)
     val removals = removalChannel.receiveAsFlow()
+    private val bulkChangeChannel = Channel<BulkListChange>(Channel.BUFFERED)
+    val bulkChanges = bulkChangeChannel.receiveAsFlow()
+    private val deletedListChannel = Channel<SavedListSnapshot>(Channel.BUFFERED)
+    val deletedLists = deletedListChannel.receiveAsFlow()
 
     init { refreshHistory() }
     fun setQuery(value: String) { query.value = value }
@@ -107,6 +116,18 @@ class ShoppingListViewModel @Inject constructor(private val repository: CartioRe
         categories.add(to, categories.removeAt(from))
         viewModelScope.launch { repository.reorder(categories.flatMap { groups[it].orEmpty() }) }
     }
+    fun markAllIncomplete() { viewModelScope.launch { repository.markAllIncomplete()?.let { bulkChangeChannel.send(BulkListChange(BulkListAction.MARKED_INCOMPLETE, it)) } } }
+    fun removeCompleted() { viewModelScope.launch { repository.removeCompleted()?.let { bulkChangeChannel.send(BulkListChange(BulkListAction.REMOVED_COMPLETED, it)) } } }
+    fun undoBulkChange(change: BulkListChange) { viewModelScope.launch { repository.restoreCurrent(change.previousItems) } }
+    fun updateActiveList(name: String, icon: SavedListIcon) {
+        val id = state.value.activeList?.savedListId ?: return
+        if (name.isNotBlank()) viewModelScope.launch { repository.updateList(id, name, icon) }
+    }
+    fun deleteActiveList() {
+        val id = state.value.activeList?.savedListId ?: return
+        viewModelScope.launch { repository.deleteSaved(id)?.let { deletedListChannel.send(it) } }
+    }
+    fun undoDeleteActiveList(snapshot: SavedListSnapshot) { viewModelScope.launch { repository.restoreSaved(snapshot); repository.activateList(snapshot.list.id) } }
     fun remove(item: ShoppingItem) { viewModelScope.launch { repository.remove(item.id); removalChannel.send(item) } }
     fun undoRemove(item: ShoppingItem) { viewModelScope.launch { repository.restoreItem(item) } }
     private fun refreshHistory() { viewModelScope.launch { history.value = repository.recent() to repository.frequent() } }

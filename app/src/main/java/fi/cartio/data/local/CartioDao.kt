@@ -20,6 +20,8 @@ interface CartioDao {
     @Query("DELETE FROM shopping_items WHERE id = :id") suspend fun deleteItem(id: Long)
     @Query("DELETE FROM shopping_items") suspend fun clearItems()
     @Query("SELECT * FROM shopping_items") suspend fun getItems(): List<ShoppingItemEntity>
+    @Query("UPDATE shopping_items SET checked = 0, updatedAt = :updatedAt WHERE checked = 1") suspend fun markAllItemsIncomplete(updatedAt: Long)
+    @Query("DELETE FROM shopping_items WHERE checked = 1") suspend fun deleteCompletedItems()
 
     @Query(
         """SELECT lists.id, lists.name, lists.createdAt, lists.icon,
@@ -109,6 +111,28 @@ interface CartioDao {
 
     @Transaction suspend fun reorderCurrent(items: List<ShoppingItemEntity>) {
         updateItems(items)
+        syncCurrentToActiveList()
+    }
+
+    @Transaction suspend fun markAllIncomplete(): List<ShoppingItemEntity>? {
+        val previous = getItems()
+        if (previous.none { it.checked }) return null
+        markAllItemsIncomplete(System.currentTimeMillis())
+        syncCurrentToActiveList()
+        return previous
+    }
+
+    @Transaction suspend fun removeCompleted(): List<ShoppingItemEntity>? {
+        val previous = getItems()
+        if (previous.none { it.checked }) return null
+        deleteCompletedItems()
+        syncCurrentToActiveList()
+        return previous
+    }
+
+    @Transaction suspend fun replaceCurrent(items: List<ShoppingItemEntity>) {
+        clearItems()
+        items.forEach { insertItem(it) }
         syncCurrentToActiveList()
     }
 }

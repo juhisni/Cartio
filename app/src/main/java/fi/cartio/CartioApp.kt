@@ -29,6 +29,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
@@ -70,9 +71,9 @@ fun CartioApp(
     onSplashFinished: () -> Unit = {},
     onDarkThemeChanged: (Boolean) -> Unit = {},
 ) {
-    var showSplash by remember { mutableStateOf(true) }
+    var showSplash by rememberSaveable { mutableStateOf(true) }
     LaunchedEffect(Unit) {
-        delay(2_200)
+        delay(900)
         showSplash = false
         onSplashFinished()
     }

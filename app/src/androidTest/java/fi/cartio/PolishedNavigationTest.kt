@@ -4,8 +4,10 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performScrollTo
 import org.junit.Rule
 import org.junit.Test
 
@@ -21,7 +23,7 @@ class PolishedNavigationTest {
         rule.onNodeWithTag("saved_create_new_list").assertIsDisplayed()
 
         rule.onNodeWithText("Settings").performClick()
-        rule.onNodeWithText("Privacy & data").assertIsDisplayed()
+        rule.onNodeWithText("Privacy & data").performScrollTo().assertIsDisplayed()
     }
 
     @Test fun mainNavigationReturnsFromSavedListsOpenedFromStartScreen() {
@@ -47,6 +49,7 @@ class PolishedNavigationTest {
         rule.onNodeWithTag("list_icon_party").performClick()
         rule.onNodeWithTag("confirm_create_list").performClick()
 
+        rule.waitUntil(timeoutMillis = 5_000) { rule.onAllNodesWithTag("active_list_card").fetchSemanticsNodes().isNotEmpty() }
         rule.onNodeWithTag("active_list_card").assertIsDisplayed()
         rule.onNodeWithText("Weekly groceries").assertIsDisplayed()
         rule.onNodeWithText("🎉").assertIsDisplayed()

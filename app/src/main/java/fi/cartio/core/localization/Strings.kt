@@ -32,6 +32,9 @@ data class CartioStrings(
     val privacyPolicy: String, val privacyPolicyBody: String,
     val legalAndLicenses: String, val copyrightNotice: String, val allRightsReserved: String,
     val legalNotices: String, val legalNoticesBody: String,
+    val listActions: String, val editList: String, val markAllIncomplete: String,
+    val removeCompleted: String, val deleteList: String, val deleteListConfirmation: String,
+    val markedIncomplete: String, val completedRemoved: String, val listDeleted: String,
 )
 
 val LocalStrings = staticCompositionLocalOf { strings(AppLanguage.ENGLISH) }
@@ -50,7 +53,10 @@ fun strings(language: AppLanguage) = if (language == AppLanguage.FINNISH) Cartio
     "Kehittäjä ja tuki", "Kehittäjä", "Ota yhteyttä tukeen",
     "Tietosuojakäytäntö", "Lue Cartion tietosuojakäytäntö",
     "Lakiasiat ja lisenssit", "© 2026 Juha-Matti Niiranen", "Kaikki oikeudet pidätetään.",
-    "Lisenssitiedot", "Avoimen lähdekoodin ohjelmistot ja aineistojen käyttöehdot"
+    "Lisenssitiedot", "Avoimen lähdekoodin ohjelmistot ja aineistojen käyttöehdot",
+    "Listan toiminnot", "Muokkaa listaa", "Merkitse kaikki ostamattomiksi",
+    "Poista ostetut tuotteet", "Poista lista", "Haluatko varmasti poistaa listan ”%s”?",
+    "Kaikki tuotteet merkittiin ostamattomiksi", "Ostetut tuotteet poistettiin", "Lista poistettiin"
 ) else CartioStrings(
     "Shopping list", "Main", "Saved", "Settings", "Add product", "Search or type a product",
     "Recently added", "Frequently added", "Your list is empty", "Add your first product quickly with the plus button.",
@@ -66,7 +72,10 @@ fun strings(language: AppLanguage) = if (language == AppLanguage.FINNISH) Cartio
     "Developer & support", "Developed by", "Contact support",
     "Privacy policy", "Read Cartio's privacy policy",
     "Legal & licenses", "© 2026 Juha-Matti Niiranen", "All rights reserved.",
-    "License notices", "Open-source software and data licensing terms"
+    "License notices", "Open-source software and data licensing terms",
+    "List actions", "Edit list", "Mark all as not completed",
+    "Remove completed products", "Delete list", "Are you sure you want to delete “%s”?",
+    "All products marked as not completed", "Completed products removed", "List deleted"
 )
 
 @Composable fun categoryName(category: ProductCategory): String {

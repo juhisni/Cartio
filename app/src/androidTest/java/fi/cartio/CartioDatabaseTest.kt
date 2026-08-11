@@ -106,4 +106,25 @@ class CartioDatabaseTest {
 
         assertEquals(1, repository.items.first().size)
     }
+
+    @Test fun bulkCompletionActionsSyncAndRestoreTheActiveList() = runTest {
+        val dao = db.dao()
+        val listId = dao.createAndActivateList("Weekly")
+        val now = System.currentTimeMillis()
+        dao.insertItem(ShoppingItemEntity(name = "Milk", normalizedName = "milk", quantity = null, unit = null, category = ProductCategory.DAIRY, checked = true, createdAt = now, updatedAt = now, sortOrder = 0))
+        dao.insertItem(ShoppingItemEntity(name = "Bread", normalizedName = "bread", quantity = null, unit = null, category = ProductCategory.BREAD_GRAINS, checked = false, createdAt = now, updatedAt = now, sortOrder = 1))
+        dao.syncCurrentToActiveList()
+
+        val beforeReset = dao.markAllIncomplete()!!
+        assertEquals(0, dao.observeItems().first().count { it.checked })
+        assertEquals(0, dao.observeSavedLists().first().single { it.id == listId }.completedCount)
+
+        dao.replaceCurrent(beforeReset)
+        assertEquals(1, dao.observeItems().first().count { it.checked })
+
+        val beforeRemoval = dao.removeCompleted()!!
+        assertEquals(listOf("Bread"), dao.observeItems().first().map { it.name })
+        dao.replaceCurrent(beforeRemoval)
+        assertEquals(listOf("Milk", "Bread"), dao.observeItems().first().map { it.name })
+    }
 }

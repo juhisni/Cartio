@@ -9,6 +9,7 @@ import fi.cartio.core.model.ShoppingItem
 import fi.cartio.core.model.SavedListIcon
 import fi.cartio.domain.repository.CartioRepository
 import fi.cartio.feature.shoppinglist.ShoppingListViewModel
+import fi.cartio.domain.suggestion.normalizeProductInput
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,9 +21,11 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -80,6 +83,29 @@ class ShoppingListViewModelTest {
 
         assertEquals(listOf("Leipä", "Maito"), viewModel.state.value.groupedItems[ProductCategory.BREAD_GRAINS]!!.map { it.name })
     }
+
+    @Test fun bulkCompletionChangeCanBeUndone() = runTest(dispatcher) {
+        val repository = FakeRepository(); val viewModel = ShoppingListViewModel(repository)
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.state.collect {} }
+        viewModel.add("maito"); advanceUntilIdle()
+        viewModel.toggle(viewModel.state.value.groupedItems[ProductCategory.DAIRY]!!.single()); advanceUntilIdle()
+        val event = async(UnconfinedTestDispatcher(testScheduler)) { viewModel.bulkChanges.first() }
+
+        viewModel.markAllIncomplete(); advanceUntilIdle()
+        assertFalse(viewModel.state.value.groupedItems[ProductCategory.DAIRY]!!.single().checked)
+
+        viewModel.undoBulkChange(event.await()); advanceUntilIdle()
+        assertTrue(viewModel.state.value.groupedItems[ProductCategory.DAIRY]!!.single().checked)
+    }
+
+    @Test fun punctuationVariantOfExistingProductIsNotOfferedAgain() = runTest(dispatcher) {
+        val repository = FakeRepository(); val viewModel = ShoppingListViewModel(repository)
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.state.collect {} }
+        viewModel.add("Coca-Cola"); advanceUntilIdle()
+        viewModel.setQuery("Coca - Cola"); advanceUntilIdle()
+
+        assertFalse(viewModel.state.value.canAddQuery)
+    }
 }
 
 private class FakeRepository : CartioRepository {
@@ -91,11 +117,24 @@ private class FakeRepository : CartioRepository {
     override suspend fun activateList(id: Long) = Unit
     override suspend fun add(name: String): ShoppingItem {
         val category = if (name.lowercase() == "leipä") ProductCategory.BREAD_GRAINS else ProductCategory.DAIRY
-        return ShoppingItem((mutableItems.value.size + 1).toLong(), name.replaceFirstChar { it.uppercase() }, name.lowercase(), category = category).also { mutableItems.value += it }
+        return ShoppingItem((mutableItems.value.size + 1).toLong(), name.replaceFirstChar { it.uppercase() }, normalizeProductInput(name), category = category).also { mutableItems.value += it }
     }
     override suspend fun toggle(item: ShoppingItem) { mutableItems.value = listOf(item.copy(checked = !item.checked)) }
     override suspend fun update(item: ShoppingItem) { mutableItems.value = listOf(item) }
     override suspend fun reorder(items: List<ShoppingItem>) { mutableItems.value = items }
+    override suspend fun markAllIncomplete(): List<ShoppingItem>? {
+        val previous = mutableItems.value
+        if (previous.none { it.checked }) return null
+        mutableItems.value = previous.map { it.copy(checked = false) }
+        return previous
+    }
+    override suspend fun removeCompleted(): List<ShoppingItem>? {
+        val previous = mutableItems.value
+        if (previous.none { it.checked }) return null
+        mutableItems.value = previous.filterNot { it.checked }
+        return previous
+    }
+    override suspend fun restoreCurrent(items: List<ShoppingItem>) { mutableItems.value = items }
     override suspend fun remove(id: Long) { mutableItems.value = emptyList() }
     override suspend fun restoreItem(item: ShoppingItem) { mutableItems.value = listOf(item) }
     override suspend fun save(name: String) = Unit; override suspend fun restore(id: Long) = Unit; override suspend fun updateList(id: Long, name: String, icon: SavedListIcon) = Unit

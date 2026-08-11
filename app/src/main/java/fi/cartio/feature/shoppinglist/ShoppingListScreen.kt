@@ -5,6 +5,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,6 +32,8 @@ import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.DeleteSweep
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.DropdownMenu
@@ -51,6 +54,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.AlertDialog
 import androidx.compose.foundation.Image
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -113,11 +117,24 @@ fun ShoppingListRoute(viewModel: ShoppingListViewModel, contentPadding: PaddingV
     var editing by remember { mutableStateOf<ShoppingItem?>(null) }
     var creatingList by remember { mutableStateOf(false) }
     var switchingList by remember { mutableStateOf(false) }
+    var editingList by remember { mutableStateOf<ActiveShoppingList?>(null) }
+    var confirmingListDelete by remember { mutableStateOf<ActiveShoppingList?>(null) }
     val snackbar = remember { SnackbarHostState() }
     val strings = LocalStrings.current
     LaunchedEffect(viewModel, strings.undo) {
         viewModel.removals.collect { item ->
             if (snackbar.showSnackbar("${item.name} ${strings.removed}", actionLabel = strings.undo, withDismissAction = true, duration = SnackbarDuration.Short) == SnackbarResult.ActionPerformed) viewModel.undoRemove(item)
+        }
+    }
+    LaunchedEffect(viewModel, strings.undo, strings.markedIncomplete, strings.completedRemoved) {
+        viewModel.bulkChanges.collect { change ->
+            val message = if (change.action == BulkListAction.MARKED_INCOMPLETE) strings.markedIncomplete else strings.completedRemoved
+            if (snackbar.showSnackbar(message, actionLabel = strings.undo, withDismissAction = true, duration = SnackbarDuration.Short) == SnackbarResult.ActionPerformed) viewModel.undoBulkChange(change)
+        }
+    }
+    LaunchedEffect(viewModel, strings.undo, strings.listDeleted) {
+        viewModel.deletedLists.collect { snapshot ->
+            if (snackbar.showSnackbar(strings.listDeleted, actionLabel = strings.undo, withDismissAction = true, duration = SnackbarDuration.Short) == SnackbarResult.ActionPerformed) viewModel.undoDeleteActiveList(snapshot)
         }
     }
     Box(Modifier.fillMaxSize()) {
@@ -127,6 +144,10 @@ fun ShoppingListRoute(viewModel: ShoppingListViewModel, contentPadding: PaddingV
             onCreateList = { creatingList = true },
             onOpenSavedLists = onOpenSavedLists,
             onSwitchList = { switchingList = true },
+            onEditList = { editingList = state.activeList },
+            onMarkAllIncomplete = viewModel::markAllIncomplete,
+            onRemoveCompleted = viewModel::removeCompleted,
+            onDeleteList = { confirmingListDelete = state.activeList },
             onMoveItem = viewModel::moveItem,
             onMoveCategory = viewModel::moveCategory,
         )
@@ -142,6 +163,16 @@ fun ShoppingListRoute(viewModel: ShoppingListViewModel, contentPadding: PaddingV
         onCreate = { switchingList = false; creatingList = true },
         onManage = { switchingList = false; onOpenSavedLists() },
     )
+    editingList?.let { active -> EditListSheet(active, onDismiss = { editingList = null }, onSave = { name, icon -> viewModel.updateActiveList(name, icon); editingList = null }) }
+    confirmingListDelete?.let { active ->
+        AlertDialog(
+            onDismissRequest = { confirmingListDelete = null },
+            title = { Text(strings.deleteList) },
+            text = { Text(strings.deleteListConfirmation.format(active.name)) },
+            confirmButton = { TextButton(onClick = { confirmingListDelete = null; viewModel.deleteActiveList() }) { Text(strings.delete) } },
+            dismissButton = { TextButton(onClick = { confirmingListDelete = null }) { Text(strings.cancel) } },
+        )
+    }
 }
 
 @Composable
@@ -154,6 +185,10 @@ fun ShoppingListScreen(
     onCreateList: () -> Unit = {},
     onOpenSavedLists: () -> Unit = {},
     onSwitchList: () -> Unit = {},
+    onEditList: () -> Unit = {},
+    onMarkAllIncomplete: () -> Unit = {},
+    onRemoveCompleted: () -> Unit = {},
+    onDeleteList: () -> Unit = {},
     onMoveItem: (ShoppingItem, Int) -> Unit = { _, _ -> },
     onMoveCategory: (ProductCategory, Int) -> Unit = { _, _ -> },
 ) {
@@ -168,7 +203,7 @@ fun ShoppingListScreen(
         if (state.activeList == null) {
             item { NoActiveListState(onCreateList, onOpenSavedLists) }
         } else {
-            item { ActiveListCard(state.activeList, onSwitchList) }
+            item { ActiveListCard(state.activeList, onSwitchList, onEditList, onMarkAllIncomplete, onRemoveCompleted, onDeleteList) }
         }
         if (state.activeList != null && state.groupedItems.isEmpty()) item {
             Column(Modifier.fillParentMaxSize().padding(horizontal = 48.dp, vertical = 72.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
@@ -208,23 +243,53 @@ private fun NoActiveListState(onCreate: () -> Unit, onOpenSaved: () -> Unit) {
 }
 
 @Composable
-private fun ActiveListCard(active: ActiveShoppingList, onSwitch: () -> Unit) {
+private fun ActiveListCard(active: ActiveShoppingList, onSwitch: () -> Unit, onEdit: () -> Unit, onMarkAllIncomplete: () -> Unit, onRemoveCompleted: () -> Unit, onDelete: () -> Unit) {
     val strings = LocalStrings.current
+    var menuExpanded by remember { mutableStateOf(false) }
     Card(
-        onClick = onSwitch,
         modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 4.dp).testTag("active_list_card"),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(0.dp),
     ) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(active.icon.symbol, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(end = 12.dp))
-            Column(Modifier.weight(1f)) {
-                Text(strings.currentList, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-                Text(active.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(strings.listProgress.format(active.itemCount, active.completedCount), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.weight(1f).clickable(role = Role.Button, onClick = onSwitch).padding(start = 16.dp, top = 12.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(active.icon.symbol, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(end = 12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(strings.currentList, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                    Text(active.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(strings.listProgress.format(active.itemCount, active.completedCount), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Icon(Icons.Outlined.KeyboardArrowDown, strings.switchList)
             }
-            Icon(Icons.Outlined.KeyboardArrowDown, strings.switchList)
+            Box {
+                IconButton(onClick = { menuExpanded = true }) { Icon(Icons.Outlined.MoreVert, strings.listActions) }
+                DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                    DropdownMenuItem(text = { Text(strings.editList) }, leadingIcon = { Icon(Icons.Outlined.Edit, null) }, onClick = { menuExpanded = false; onEdit() })
+                    DropdownMenuItem(text = { Text(strings.markAllIncomplete) }, leadingIcon = { Icon(Icons.Outlined.Refresh, null) }, enabled = active.completedCount > 0, onClick = { menuExpanded = false; onMarkAllIncomplete() })
+                    DropdownMenuItem(text = { Text(strings.removeCompleted) }, leadingIcon = { Icon(Icons.Outlined.DeleteSweep, null) }, enabled = active.completedCount > 0, onClick = { menuExpanded = false; onRemoveCompleted() })
+                    DropdownMenuItem(text = { Text(strings.deleteList) }, leadingIcon = { Icon(Icons.Outlined.DeleteOutline, null) }, onClick = { menuExpanded = false; onDelete() })
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun EditListSheet(active: ActiveShoppingList, onDismiss: () -> Unit, onSave: (String, SavedListIcon) -> Unit) {
+    var name by remember(active.savedListId) { mutableStateOf(active.name) }
+    var icon by remember(active.savedListId) { mutableStateOf(active.icon) }
+    val strings = LocalStrings.current
+    ModalBottomSheet(onDismissRequest = onDismiss, shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)) {
+        Column(Modifier.fillMaxWidth().imePadding().padding(horizontal = 20.dp, vertical = 8.dp).padding(bottom = 24.dp)) {
+            Text(strings.editList, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 16.dp))
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                SavedListIconPicker(icon, strings.listIcon) { icon = it }
+                OutlinedTextField(name, { name = it }, label = { Text(strings.listName) }, singleLine = true, shape = RoundedCornerShape(16.dp), modifier = Modifier.weight(1f))
+            }
+            Button(onClick = { onSave(name.trim(), icon) }, enabled = name.isNotBlank(), shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth().padding(top = 12.dp).height(54.dp)) { Text(strings.save) }
+            TextButton(onClick = onDismiss, modifier = Modifier.align(Alignment.CenterHorizontally)) { Text(strings.cancel) }
         }
     }
 }
@@ -322,7 +387,7 @@ private fun ProductRow(product: ShoppingItem, onToggle: (ShoppingItem) -> Unit, 
             .shadow(if (dragging) 12.dp else 0.dp, RoundedCornerShape(16.dp))
             .background(if (dragging) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(16.dp))
             .reorderable(onMove) { active, offset -> dragging = active; dragOffset = offset }
-            .clickable(role = Role.Checkbox) { onToggle(product) }
+            .toggleable(value = product.checked, role = Role.Checkbox, onValueChange = { onToggle(product) })
             .alpha(if (product.checked) .58f else 1f)
             .padding(start = 16.dp, end = 4.dp, top = 5.dp, bottom = 5.dp),
         verticalAlignment = Alignment.CenterVertically,

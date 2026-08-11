@@ -20,6 +20,9 @@ interface CartioRepository {
     suspend fun toggle(item: ShoppingItem)
     suspend fun update(item: ShoppingItem)
     suspend fun reorder(items: List<ShoppingItem>)
+    suspend fun markAllIncomplete(): List<ShoppingItem>?
+    suspend fun removeCompleted(): List<ShoppingItem>?
+    suspend fun restoreCurrent(items: List<ShoppingItem>)
     suspend fun remove(id: Long)
     suspend fun restoreItem(item: ShoppingItem)
     suspend fun save(name: String)

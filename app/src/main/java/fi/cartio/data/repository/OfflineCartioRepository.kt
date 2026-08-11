@@ -55,6 +55,9 @@ class OfflineCartioRepository @Inject constructor(private val dao: CartioDao, pr
         dao.syncCurrentToActiveList()
     }
     override suspend fun reorder(items: List<ShoppingItem>) = dao.reorderCurrent(items.mapIndexed { index, item -> item.copy(sortOrder = index).entity() })
+    override suspend fun markAllIncomplete() = dao.markAllIncomplete()?.map { it.model() }
+    override suspend fun removeCompleted() = dao.removeCompleted()?.map { it.model() }
+    override suspend fun restoreCurrent(items: List<ShoppingItem>) = dao.replaceCurrent(items.map { it.entity() })
     override suspend fun remove(id: Long) { dao.deleteItem(id); dao.syncCurrentToActiveList() }
     override suspend fun restoreItem(item: ShoppingItem) {
         if (dao.findItem(item.normalizedName) != null) return
