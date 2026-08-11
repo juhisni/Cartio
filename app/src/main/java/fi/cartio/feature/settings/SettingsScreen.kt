@@ -67,8 +67,8 @@ fun SettingsRoute(viewModel: SettingsViewModel, contentPadding: PaddingValues) {
         item { CartioScreenHeader(strings.settings, Modifier.padding(bottom = 18.dp)) }
         item {
             SettingsCard(Icons.Outlined.Language, strings.language) {
-                Choice(strings.finnish, state.language == AppLanguage.FINNISH) { viewModel.language(AppLanguage.FINNISH) }
                 Choice(strings.english, state.language == AppLanguage.ENGLISH) { viewModel.language(AppLanguage.ENGLISH) }
+                Choice(strings.finnish, state.language == AppLanguage.FINNISH) { viewModel.language(AppLanguage.FINNISH) }
             }
         }
         item {
