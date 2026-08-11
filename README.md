@@ -44,3 +44,9 @@ $env:JAVA_HOME='C:\Program Files\Android\Android Studio\jbr'
 
 - The bundled catalog is a curated collection of recognizable everyday Finnish/English grocery products adapted from Fineli Release 20. Nutritional, preparation, package-size, and synthetic variants are excluded.
 - No barcode scanner, cloud sync, accounts, analytics, notifications, or networking.
+
+## Privacy policy
+
+The bilingual privacy policy is published with GitHub Pages from the `docs` directory:
+
+<https://juhisni.github.io/Cartio/privacy/>

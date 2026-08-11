@@ -28,6 +28,8 @@ data class CartioStrings(
     val privacySummary: String, val localStorage: String, val localStorageBody: String,
     val androidBackup: String, val androidBackupBody: String, val permissions: String,
     val permissionsBody: String, val versionFormat: String,
+    val developerAndSupport: String, val developedBy: String, val contactSupport: String,
+    val privacyPolicy: String, val privacyPolicyBody: String,
 )
 
 val LocalStrings = staticCompositionLocalOf { strings(AppLanguage.ENGLISH) }
@@ -42,7 +44,9 @@ fun strings(language: AppLanguage) = if (language == AppLanguage.FINNISH) Cartio
     "Mitä haluaisit tehdä?", "Luo uusi lista", "Avaa tallennetut listat", "Listasi säilyvät tällä laitteella", "Luo lista", "NYKYINEN LISTA", "%d tuotetta · %d valmiina", "Vaihda listaa", "Käytössä", "Hallitse tallennettuja listoja", "Järjestä vetämällä", "Siirrä ylös", "Siirrä alas", "Listan ikoni",
     "Ostokset yksinkertaisemmin.", "Nopea ja offline-ensisijainen ostoslista jokapäiväiseen käyttöön.", "Yksityisyys ja tiedot",
     "Ei käyttäjätiliä, mainoksia, analytiikkaa tai verkkoyhteyttä. Cartio ei lähetä listojasi minnekään.", "Tallennettu laitteelle", "Listat, asetukset ja tuotehistoria tallennetaan paikallisesti laitteellesi.",
-    "Android-varmuuskopio", "Laitteesi asetuksista riippuen Android voi sisällyttää Cartion tiedot järjestelmän varmuuskopioihin tai laitteiden väliseen siirtoon.", "Käyttöoikeudet", "Cartio ei tällä hetkellä pyydä laitteesi käyttöoikeuksia.", "Versio %s (%d)"
+    "Android-varmuuskopio", "Laitteesi asetuksista riippuen Android voi sisällyttää Cartion tiedot järjestelmän varmuuskopioihin tai laitteiden väliseen siirtoon.", "Käyttöoikeudet", "Cartio ei tällä hetkellä pyydä laitteesi käyttöoikeuksia.", "Versio %s (%d)",
+    "Kehittäjä ja tuki", "Kehittäjä", "Ota yhteyttä tukeen",
+    "Tietosuojakäytäntö", "Lue Cartion tietosuojakäytäntö"
 ) else CartioStrings(
     "Shopping list", "Main", "Saved", "Settings", "Add product", "Search or type a product",
     "Recently added", "Frequently added", "Your list is empty", "Add your first product quickly with the plus button.",
@@ -54,7 +58,9 @@ fun strings(language: AppLanguage) = if (language == AppLanguage.FINNISH) Cartio
     "What would you like to do?", "Create new list", "Open saved lists", "Your lists stay on this device", "Create list", "CURRENT LIST", "%d items · %d completed", "Switch list", "Active", "Manage saved lists", "Drag to reorder", "Move up", "Move down", "List icon",
     "Shopping, simplified.", "A fast, offline-first shopping list designed for everyday errands.", "Privacy & data",
     "No account, ads, analytics, or network access. Cartio does not send your lists anywhere.", "Stored on your device", "Lists, preferences, and product history are stored locally on your device.",
-    "Android backup", "Depending on your device settings, Android may include Cartio data in system backups or device transfers.", "Permissions", "Cartio currently requests no device permissions.", "Version %s (%d)"
+    "Android backup", "Depending on your device settings, Android may include Cartio data in system backups or device transfers.", "Permissions", "Cartio currently requests no device permissions.", "Version %s (%d)",
+    "Developer & support", "Developed by", "Contact support",
+    "Privacy policy", "Read Cartio's privacy policy"
 )
 
 @Composable fun categoryName(category: ProductCategory): String {
