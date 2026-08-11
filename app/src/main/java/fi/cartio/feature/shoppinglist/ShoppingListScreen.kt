@@ -47,6 +47,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.SnackbarDuration
@@ -163,7 +164,15 @@ fun ShoppingListRoute(viewModel: ShoppingListViewModel, contentPadding: PaddingV
             onMoveItem = viewModel::moveItem,
             onMoveCategory = viewModel::moveCategory,
         )
-        SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).padding(bottom = contentPadding.calculateBottomPadding() + 76.dp))
+        SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).padding(bottom = contentPadding.calculateBottomPadding() + 76.dp)) { data ->
+            Snackbar(
+                snackbarData = data,
+                containerColor = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.onSurface,
+                actionColor = MaterialTheme.colorScheme.primary,
+                dismissActionContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
     editing?.let { item -> ProductEditorSheet(item, onDismiss = { editing = null }, onSave = { viewModel.update(it); editing = null }) }
     if (creatingList) CreateListSheet(onDismiss = { creatingList = false }, onCreate = { name, icon -> viewModel.createList(name, icon); creatingList = false })
@@ -179,6 +188,9 @@ fun ShoppingListRoute(viewModel: ShoppingListViewModel, contentPadding: PaddingV
     confirmingListDelete?.let { active ->
         AlertDialog(
             onDismissRequest = { confirmingListDelete = null },
+            containerColor = MaterialTheme.colorScheme.surface,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
             title = { Text(strings.deleteList) },
             text = { Text(strings.deleteListConfirmation.format(active.name)) },
             confirmButton = { TextButton(onClick = { confirmingListDelete = null; viewModel.deleteActiveList() }) { Text(strings.delete) } },
