@@ -56,3 +56,5 @@ Legal and license notices are published at:
 <https://juhisni.github.io/Cartio/legal/>
 
 The audited Google Play Data safety answers are documented in [`docs/PLAY_CONSOLE_DATA_SAFETY.md`](docs/PLAY_CONSOLE_DATA_SAFETY.md).
+
+Target-audience and IARC content-rating answers are documented in [`docs/PLAY_CONSOLE_AUDIENCE_AND_RATING.md`](docs/PLAY_CONSOLE_AUDIENCE_AND_RATING.md).
