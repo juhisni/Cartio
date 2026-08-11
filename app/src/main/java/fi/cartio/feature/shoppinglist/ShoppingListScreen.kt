@@ -44,6 +44,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
@@ -112,6 +113,7 @@ import fi.cartio.core.model.SavedShoppingList
 import fi.cartio.core.model.SavedListIcon
 import fi.cartio.core.model.formatQuantity
 import fi.cartio.core.model.formatShoppingListForSharing
+import fi.cartio.core.model.suggestedUnits
 import fi.cartio.ui.theme.CartioTheme
 import fi.cartio.R
 import kotlin.math.abs
@@ -493,6 +495,12 @@ private fun ProductEditorSheet(item: ShoppingItem, onDismiss: () -> Unit, onSave
             Row(Modifier.fillMaxWidth().padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 OutlinedTextField(quantity, { value -> quantity = value.filter { it.isDigit() || it == '.' || it == ',' } }, label = { Text(strings.quantity) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), shape = RoundedCornerShape(14.dp), modifier = Modifier.weight(1f))
                 OutlinedTextField(unit, { unit = it }, label = { Text(strings.unit) }, singleLine = true, shape = RoundedCornerShape(14.dp), modifier = Modifier.weight(1f))
+            }
+            Text(strings.suggestedUnits, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                suggestedUnits(category, finnish = strings.finnish == "Suomi").forEach { suggestion ->
+                    AssistChip(onClick = { unit = suggestion }, label = { Text(suggestion) })
+                }
             }
             Text(strings.category, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 18.dp, bottom = 6.dp))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

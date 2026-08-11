@@ -93,6 +93,13 @@ interface CartioDao {
         insertSavedItems(items)
     }
 
+    @Transaction suspend fun duplicateSavedList(id: Long, name: String): Long? {
+        val source = getSavedList(id) ?: return null
+        val duplicateId = insertSavedList(source.copy(id = 0, name = name, createdAt = System.currentTimeMillis()))
+        insertSavedItems(getSavedItems(id).map { it.copy(id = 0, listId = duplicateId) })
+        return duplicateId
+    }
+
     @Transaction suspend fun deleteSavedSnapshot(id: Long): SavedListEntitySnapshot? {
         val list = getSavedList(id) ?: return null
         val items = getSavedItems(id)

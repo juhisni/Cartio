@@ -10,8 +10,10 @@ Cartio is a calm, fast, offline-first Android shopping list. Products are added 
 - Reset completion state or remove completed products with undo
 - Collapse category sections while keeping unchecked counts visible
 - Edit product names, quantities, units, and categories
+- Choose contextual unit suggestions based on the product category
 - Undo deleted products and saved lists
 - Save, rename, delete, and restore reusable lists
+- Duplicate saved lists with all products and list details preserved
 - Manage the active list directly from the main view
 - Share the active shopping list as plain text through Android's share sheet
 - Finnish and English UI

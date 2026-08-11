@@ -35,6 +35,7 @@ class SavedListsViewModel @Inject constructor(private val repository: CartioRepo
     fun create(name: String, icon: SavedListIcon) { if (name.isNotBlank()) viewModelScope.launch { repository.createList(name, icon) } }
     fun restore(id: Long) { viewModelScope.launch { repository.restore(id) } }
     fun update(id: Long, name: String, icon: SavedListIcon) { if (name.isNotBlank()) viewModelScope.launch { repository.updateList(id, name, icon) } }
+    fun duplicate(id: Long, name: String) { if (name.isNotBlank()) viewModelScope.launch { repository.duplicateList(id, name) } }
     fun delete(id: Long) { viewModelScope.launch { repository.deleteSaved(id)?.let { deletionChannel.send(it) } } }
     fun undoDelete(snapshot: SavedListSnapshot) { viewModelScope.launch { repository.restoreSaved(snapshot) } }
 }

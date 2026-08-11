@@ -67,6 +67,7 @@ class OfflineCartioRepository @Inject constructor(private val dao: CartioDao, pr
     override suspend fun save(name: String) { dao.saveCurrent(name.trim()) }
     override suspend fun restore(id: Long) = dao.activateSavedList(id)
     override suspend fun updateList(id: Long, name: String, icon: SavedListIcon) = dao.updateList(id, name.trim(), icon)
+    override suspend fun duplicateList(id: Long, name: String) { dao.duplicateSavedList(id, name.trim()) }
     override suspend fun deleteSaved(id: Long): SavedListSnapshot? {
         val deleted = dao.deleteSavedSnapshot(id) ?: return null
         val list = deleted.list

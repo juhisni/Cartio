@@ -138,6 +138,7 @@ private class FakeRepository : CartioRepository {
     override suspend fun remove(id: Long) { mutableItems.value = emptyList() }
     override suspend fun restoreItem(item: ShoppingItem) { mutableItems.value = listOf(item) }
     override suspend fun save(name: String) = Unit; override suspend fun restore(id: Long) = Unit; override suspend fun updateList(id: Long, name: String, icon: SavedListIcon) = Unit
+    override suspend fun duplicateList(id: Long, name: String) = Unit
     override suspend fun deleteSaved(id: Long): fi.cartio.core.model.SavedListSnapshot? = null
     override suspend fun restoreSaved(snapshot: fi.cartio.core.model.SavedListSnapshot) = Unit
     override suspend fun learn(name: String, category: ProductCategory) = Unit

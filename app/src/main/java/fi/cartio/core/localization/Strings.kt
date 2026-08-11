@@ -36,6 +36,7 @@ data class CartioStrings(
     val removeCompleted: String, val deleteList: String, val deleteListConfirmation: String,
     val markedIncomplete: String, val completedRemoved: String, val listDeleted: String,
     val shareList: String, val shareListWith: String,
+    val duplicateList: String, val duplicateListName: String, val suggestedUnits: String,
 )
 
 val LocalStrings = staticCompositionLocalOf { strings(AppLanguage.ENGLISH) }
@@ -58,7 +59,8 @@ fun strings(language: AppLanguage) = if (language == AppLanguage.FINNISH) Cartio
     "Listan toiminnot", "Muokkaa listaa", "Merkitse kaikki ostamattomiksi",
     "Poista ostetut tuotteet", "Poista lista", "Haluatko varmasti poistaa listan ”%s”?",
     "Kaikki tuotteet merkittiin ostamattomiksi", "Ostetut tuotteet poistettiin", "Lista poistettiin",
-    "Jaa lista tekstinä", "Jaa ostoslista sovelluksella"
+    "Jaa lista tekstinä", "Jaa ostoslista sovelluksella",
+    "Monista lista", "%s – kopio", "Yksikköehdotukset"
 ) else CartioStrings(
     "Shopping list", "Main", "Saved", "Settings", "Add product", "Search or type a product",
     "Recently added", "Frequently added", "Your list is empty", "Add your first product quickly with the plus button.",
@@ -78,7 +80,8 @@ fun strings(language: AppLanguage) = if (language == AppLanguage.FINNISH) Cartio
     "List actions", "Edit list", "Mark all as not completed",
     "Remove completed products", "Delete list", "Are you sure you want to delete “%s”?",
     "All products marked as not completed", "Completed products removed", "List deleted",
-    "Share list as text", "Share shopping list with"
+    "Share list as text", "Share shopping list with",
+    "Duplicate list", "%s – copy", "Suggested units"
 )
 
 @Composable fun categoryName(category: ProductCategory): String {

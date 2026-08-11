@@ -127,4 +127,24 @@ class CartioDatabaseTest {
         dao.replaceCurrent(beforeRemoval)
         assertEquals(listOf("Milk", "Bread"), dao.observeItems().first().map { it.name })
     }
+
+    @Test fun duplicateListCopiesMetadataAndEveryProductWithoutActivatingIt() = runTest {
+        val dao = db.dao()
+        val sourceId = dao.createAndActivateList("Weekly", SavedListIcon.HOME)
+        val now = System.currentTimeMillis()
+        dao.insertItem(ShoppingItemEntity(name = "Milk", normalizedName = "milk", quantity = 2.0, unit = "l", category = ProductCategory.DAIRY, checked = true, createdAt = now, updatedAt = now))
+        dao.syncCurrentToActiveList()
+
+        val duplicateId = dao.duplicateSavedList(sourceId, "Weekly – copy")!!
+        val duplicate = dao.getSavedList(duplicateId)!!
+        val duplicateItem = dao.getSavedItems(duplicateId).single()
+
+        assertEquals("Weekly – copy", duplicate.name)
+        assertEquals(SavedListIcon.HOME, duplicate.icon)
+        assertEquals("Milk", duplicateItem.name)
+        assertEquals(2.0, duplicateItem.quantity)
+        assertEquals("l", duplicateItem.unit)
+        assertEquals(true, duplicateItem.checked)
+        assertEquals(sourceId, dao.observeActiveList().first()?.savedListId)
+    }
 }

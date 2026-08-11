@@ -23,6 +23,7 @@ import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -115,7 +116,7 @@ fun SavedListsRoute(contentPadding: PaddingValues, onRestored: () -> Unit, viewM
             }
         }
         items(state.lists, key = { it.id }) { list ->
-            SavedListCard(list, isActive = state.activeListId == list.id, onRestore = { viewModel.restore(list.id); onRestored() }, onRename = { dialog = DialogState.Rename(list) }, onDelete = { viewModel.delete(list.id) })
+            SavedListCard(list, isActive = state.activeListId == list.id, onRestore = { viewModel.restore(list.id); onRestored() }, onRename = { dialog = DialogState.Rename(list) }, onDuplicate = { viewModel.duplicate(list.id, strings.duplicateListName.format(list.name)) }, onDelete = { viewModel.delete(list.id) })
         }
         }
         SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).padding(bottom = contentPadding.calculateBottomPadding() + 16.dp)) { data ->
@@ -145,7 +146,7 @@ fun SavedListsRoute(contentPadding: PaddingValues, onRestored: () -> Unit, viewM
 }
 
 @Composable
-private fun SavedListCard(list: SavedShoppingList, isActive: Boolean, onRestore: () -> Unit, onRename: () -> Unit, onDelete: () -> Unit) {
+private fun SavedListCard(list: SavedShoppingList, isActive: Boolean, onRestore: () -> Unit, onRename: () -> Unit, onDuplicate: () -> Unit, onDelete: () -> Unit) {
     var menuExpanded by remember { mutableStateOf(false) }
     val strings = LocalStrings.current
     Card(Modifier.fillMaxWidth().padding(horizontal = 20.dp), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
@@ -162,6 +163,7 @@ private fun SavedListCard(list: SavedShoppingList, isActive: Boolean, onRestore:
                 IconButton(onClick = { menuExpanded = true }) { Icon(Icons.Outlined.MoreVert, strings.moreOptions) }
                 DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                     DropdownMenuItem(text = { Text(strings.rename) }, leadingIcon = { Icon(Icons.Outlined.Edit, null) }, onClick = { menuExpanded = false; onRename() })
+                    DropdownMenuItem(text = { Text(strings.duplicateList) }, leadingIcon = { Icon(Icons.Outlined.ContentCopy, null) }, onClick = { menuExpanded = false; onDuplicate() })
                     DropdownMenuItem(text = { Text(strings.delete) }, leadingIcon = { Icon(Icons.Outlined.Delete, null) }, onClick = { menuExpanded = false; onDelete() })
                 }
             }

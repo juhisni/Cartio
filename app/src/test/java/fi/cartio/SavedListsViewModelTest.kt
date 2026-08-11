@@ -79,6 +79,7 @@ private class SavedListsFakeRepository : CartioRepository {
     override suspend fun save(name: String) = Unit
     override suspend fun restore(id: Long) = Unit
     override suspend fun updateList(id: Long, name: String, icon: SavedListIcon) = Unit
+    override suspend fun duplicateList(id: Long, name: String) = Unit
     override suspend fun deleteSaved(id: Long): SavedListSnapshot? = null
     override suspend fun restoreSaved(snapshot: SavedListSnapshot) = Unit
     override suspend fun learn(name: String, category: ProductCategory) = Unit
