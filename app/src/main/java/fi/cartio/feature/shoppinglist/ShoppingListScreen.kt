@@ -1,5 +1,7 @@
 package fi.cartio.feature.shoppinglist
 
+import android.content.Context
+import android.content.Intent
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
@@ -33,6 +35,7 @@ import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material.icons.outlined.DeleteSweep
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -74,6 +77,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
@@ -106,6 +110,7 @@ import fi.cartio.core.model.ActiveShoppingList
 import fi.cartio.core.model.SavedShoppingList
 import fi.cartio.core.model.SavedListIcon
 import fi.cartio.core.model.formatQuantity
+import fi.cartio.core.model.formatShoppingListForSharing
 import fi.cartio.ui.theme.CartioTheme
 import fi.cartio.R
 import kotlin.math.abs
@@ -121,6 +126,8 @@ fun ShoppingListRoute(viewModel: ShoppingListViewModel, contentPadding: PaddingV
     var confirmingListDelete by remember { mutableStateOf<ActiveShoppingList?>(null) }
     val snackbar = remember { SnackbarHostState() }
     val strings = LocalStrings.current
+    val context = LocalContext.current
+    val categoryNames = ProductCategory.entries.associateWith { categoryName(it) }
     LaunchedEffect(viewModel, strings.undo) {
         viewModel.removals.collect { item ->
             if (snackbar.showSnackbar("${item.name} ${strings.removed}", actionLabel = strings.undo, withDismissAction = true, duration = SnackbarDuration.Short) == SnackbarResult.ActionPerformed) viewModel.undoRemove(item)
@@ -145,6 +152,11 @@ fun ShoppingListRoute(viewModel: ShoppingListViewModel, contentPadding: PaddingV
             onOpenSavedLists = onOpenSavedLists,
             onSwitchList = { switchingList = true },
             onEditList = { editingList = state.activeList },
+            onShareList = {
+                state.activeList?.let { active ->
+                    shareListText(context, strings.shareListWith, formatShoppingListForSharing(active.name, state.groupedItems, categoryNames))
+                }
+            },
             onMarkAllIncomplete = viewModel::markAllIncomplete,
             onRemoveCompleted = viewModel::removeCompleted,
             onDeleteList = { confirmingListDelete = state.activeList },
@@ -186,6 +198,7 @@ fun ShoppingListScreen(
     onOpenSavedLists: () -> Unit = {},
     onSwitchList: () -> Unit = {},
     onEditList: () -> Unit = {},
+    onShareList: () -> Unit = {},
     onMarkAllIncomplete: () -> Unit = {},
     onRemoveCompleted: () -> Unit = {},
     onDeleteList: () -> Unit = {},
@@ -203,7 +216,7 @@ fun ShoppingListScreen(
         if (state.activeList == null) {
             item { NoActiveListState(onCreateList, onOpenSavedLists) }
         } else {
-            item { ActiveListCard(state.activeList, onSwitchList, onEditList, onMarkAllIncomplete, onRemoveCompleted, onDeleteList) }
+            item { ActiveListCard(state.activeList, onSwitchList, onEditList, onShareList, onMarkAllIncomplete, onRemoveCompleted, onDeleteList) }
         }
         if (state.activeList != null && state.groupedItems.isEmpty()) item {
             Column(Modifier.fillParentMaxSize().padding(horizontal = 48.dp, vertical = 72.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
@@ -243,7 +256,7 @@ private fun NoActiveListState(onCreate: () -> Unit, onOpenSaved: () -> Unit) {
 }
 
 @Composable
-private fun ActiveListCard(active: ActiveShoppingList, onSwitch: () -> Unit, onEdit: () -> Unit, onMarkAllIncomplete: () -> Unit, onRemoveCompleted: () -> Unit, onDelete: () -> Unit) {
+private fun ActiveListCard(active: ActiveShoppingList, onSwitch: () -> Unit, onEdit: () -> Unit, onShare: () -> Unit, onMarkAllIncomplete: () -> Unit, onRemoveCompleted: () -> Unit, onDelete: () -> Unit) {
     val strings = LocalStrings.current
     var menuExpanded by remember { mutableStateOf(false) }
     Card(
@@ -266,6 +279,7 @@ private fun ActiveListCard(active: ActiveShoppingList, onSwitch: () -> Unit, onE
                 IconButton(onClick = { menuExpanded = true }) { Icon(Icons.Outlined.MoreVert, strings.listActions) }
                 DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                     DropdownMenuItem(text = { Text(strings.editList) }, leadingIcon = { Icon(Icons.Outlined.Edit, null) }, onClick = { menuExpanded = false; onEdit() })
+                    DropdownMenuItem(text = { Text(strings.shareList) }, leadingIcon = { Icon(Icons.Outlined.Share, null) }, onClick = { menuExpanded = false; onShare() })
                     DropdownMenuItem(text = { Text(strings.markAllIncomplete) }, leadingIcon = { Icon(Icons.Outlined.Refresh, null) }, enabled = active.completedCount > 0, onClick = { menuExpanded = false; onMarkAllIncomplete() })
                     DropdownMenuItem(text = { Text(strings.removeCompleted) }, leadingIcon = { Icon(Icons.Outlined.DeleteSweep, null) }, enabled = active.completedCount > 0, onClick = { menuExpanded = false; onRemoveCompleted() })
                     DropdownMenuItem(text = { Text(strings.deleteList) }, leadingIcon = { Icon(Icons.Outlined.DeleteOutline, null) }, onClick = { menuExpanded = false; onDelete() })
@@ -273,6 +287,14 @@ private fun ActiveListCard(active: ActiveShoppingList, onSwitch: () -> Unit, onE
             }
         }
     }
+}
+
+private fun shareListText(context: Context, chooserTitle: String, text: String) {
+    val intent = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_TEXT, text)
+    }
+    context.startActivity(Intent.createChooser(intent, chooserTitle))
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
