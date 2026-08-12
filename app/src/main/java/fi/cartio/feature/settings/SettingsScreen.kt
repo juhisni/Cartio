@@ -136,5 +136,8 @@ private fun AboutInfoRow(icon: ImageVector, title: String, body: String? = null,
 }
 
 @Composable private fun Choice(label: String, selected: Boolean, onClick: () -> Unit) {
-    Row(Modifier.fillMaxWidth().clickable(role = Role.RadioButton, onClick = onClick).padding(horizontal = 8.dp).heightIn(min = 48.dp), verticalAlignment = Alignment.CenterVertically) { RadioButton(selected, onClick = null); Text(label) }
+    Row(Modifier.fillMaxWidth().clickable(role = Role.RadioButton, onClick = onClick).padding(horizontal = 8.dp).heightIn(min = 48.dp), verticalAlignment = Alignment.CenterVertically) {
+        RadioButton(selected, onClick = null)
+        Text(label, modifier = Modifier.padding(start = 8.dp))
+    }
 }
