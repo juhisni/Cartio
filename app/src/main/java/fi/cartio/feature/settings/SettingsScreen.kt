@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import fi.cartio.core.localization.LocalStrings
 import fi.cartio.core.designsystem.CartioScreenHeader
+import fi.cartio.core.designsystem.CartioWordmark
 import fi.cartio.core.model.AppLanguage
 import fi.cartio.core.model.ThemePreference
 import fi.cartio.R
@@ -84,7 +85,7 @@ fun SettingsRoute(viewModel: SettingsViewModel, contentPadding: PaddingValues) {
                 Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                     Image(painterResource(R.drawable.cartio_foreground), contentDescription = null, modifier = Modifier.size(64.dp))
                     Column(Modifier.padding(start = 14.dp)) {
-                        Text("Cartio", style = MaterialTheme.typography.titleLarge)
+                        CartioWordmark(style = MaterialTheme.typography.titleLarge)
                         Text(strings.aboutTagline, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
                         Text(strings.versionFormat.format(version.first, version.second), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }

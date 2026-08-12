@@ -225,7 +225,7 @@ fun ShoppingListScreen(
         contentPadding = PaddingValues(top = contentPadding.calculateTopPadding() + 16.dp, bottom = contentPadding.calculateBottomPadding() + 92.dp),
     ) {
         item {
-            CartioScreenHeader(if (state.activeList == null) "Cartio" else LocalStrings.current.shoppingList, Modifier.padding(start = 20.dp, end = 12.dp, bottom = 6.dp))
+            CartioScreenHeader(if (state.activeList == null) "Cartio" else LocalStrings.current.shoppingList, Modifier.padding(start = 20.dp, end = 12.dp, bottom = 6.dp), branded = state.activeList == null)
         }
         if (state.activeList == null) {
             item { NoActiveListState(onCreateList, onOpenSavedLists) }

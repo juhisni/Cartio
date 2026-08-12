@@ -18,17 +18,22 @@ import androidx.compose.ui.unit.dp
 fun CartioScreenHeader(
     title: String,
     modifier: Modifier = Modifier,
+    branded: Boolean = false,
     action: @Composable RowScope.() -> Unit = {},
 ) {
     Row(modifier.fillMaxWidth().heightIn(min = 56.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(
-            title,
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f).padding(end = 8.dp),
-        )
+        if (branded) {
+            CartioWordmark(modifier = Modifier.weight(1f).padding(end = 8.dp))
+        } else {
+            Text(
+                title,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f).padding(end = 8.dp),
+            )
+        }
         action()
     }
 }
