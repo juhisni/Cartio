@@ -225,7 +225,7 @@ fun ShoppingListScreen(
         contentPadding = PaddingValues(top = contentPadding.calculateTopPadding() + 16.dp, bottom = contentPadding.calculateBottomPadding() + 92.dp),
     ) {
         item {
-            CartioScreenHeader(if (state.activeList == null) "Cartio" else LocalStrings.current.shoppingList, Modifier.padding(start = 20.dp, end = 12.dp, bottom = 10.dp))
+            CartioScreenHeader(if (state.activeList == null) "Cartio" else LocalStrings.current.shoppingList, Modifier.padding(start = 20.dp, end = 12.dp, bottom = 6.dp))
         }
         if (state.activeList == null) {
             item { NoActiveListState(onCreateList, onOpenSavedLists) }
@@ -257,12 +257,12 @@ fun ShoppingListScreen(
 @Composable
 private fun NoActiveListState(onCreate: () -> Unit, onOpenSaved: () -> Unit) {
     val strings = LocalStrings.current
-    Column(Modifier.fillMaxWidth().padding(horizontal = 32.dp, vertical = 64.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        Image(painterResource(R.drawable.cartio_foreground), contentDescription = null, modifier = Modifier.size(112.dp))
-        Text(strings.whatWouldYouLike, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 24.dp))
-        Button(onClick = onCreate, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth().padding(top = 24.dp).height(54.dp).testTag("create_new_list")) { Text(strings.createNewList) }
-        OutlinedButton(onClick = onOpenSaved, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth().padding(top = 10.dp).height(54.dp)) { Text(strings.openSavedLists) }
-        Row(Modifier.padding(top = 36.dp), verticalAlignment = Alignment.CenterVertically) {
+    Column(Modifier.fillMaxWidth().padding(horizontal = 28.dp, vertical = 40.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Image(painterResource(R.drawable.cartio_foreground), contentDescription = null, modifier = Modifier.size(92.dp))
+        Text(strings.whatWouldYouLike, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 18.dp))
+        Button(onClick = onCreate, shape = RoundedCornerShape(15.dp), modifier = Modifier.fillMaxWidth().padding(top = 24.dp).height(52.dp).testTag("create_new_list")) { Text(strings.createNewList) }
+        OutlinedButton(onClick = onOpenSaved, shape = RoundedCornerShape(15.dp), modifier = Modifier.fillMaxWidth().padding(top = 10.dp).height(52.dp)) { Text(strings.openSavedLists) }
+        Row(Modifier.padding(top = 28.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Outlined.Lock, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
             Text(strings.listsStayOnDevice, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 8.dp))
         }

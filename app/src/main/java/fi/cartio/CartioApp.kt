@@ -2,11 +2,8 @@ package fi.cartio
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.Home
@@ -102,7 +99,7 @@ fun CartioApp(
             Scaffold(
                 modifier = Modifier.fillMaxSize(),
                 bottomBar = {
-                    NavigationBar(modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars), containerColor = MaterialTheme.colorScheme.surface, tonalElevation = 0.dp) {
+                    NavigationBar(containerColor = MaterialTheme.colorScheme.surface, tonalElevation = 0.dp) {
                         Destination.entries.forEach { destination ->
                             val label = when (destination) { Destination.Main -> labels.main; Destination.Saved -> labels.saved; Destination.Settings -> labels.settings }
                             NavigationBarItem(selected = current == destination.route, onClick = { nav.navigate(destination.route) { popUpTo(nav.graph.findStartDestination().id); launchSingleTop = true } }, icon = { Icon(destination.icon, contentDescription = label) }, label = { Text(label, style = MaterialTheme.typography.labelSmall, maxLines = 1, overflow = TextOverflow.Ellipsis) }, colors = NavigationBarItemDefaults.colors(selectedIconColor = MaterialTheme.colorScheme.primary, selectedTextColor = MaterialTheme.colorScheme.primary, indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = .12f)))
@@ -110,7 +107,7 @@ fun CartioApp(
                     }
                 },
                 floatingActionButton = {
-                    if (current == Destination.Main.route && shoppingState.activeList != null) FloatingActionButton(onClick = { quickAdd = true }, modifier = Modifier.size(64.dp).shadow(12.dp, CircleShape).testTag("open_quick_add"), shape = CircleShape, containerColor = MaterialTheme.colorScheme.primary) { Icon(Icons.Rounded.Add, contentDescription = labels.addProduct, modifier = Modifier.size(32.dp)) }
+                    if (current == Destination.Main.route && shoppingState.activeList != null) FloatingActionButton(onClick = { quickAdd = true }, modifier = Modifier.size(56.dp).shadow(6.dp, CircleShape).testTag("open_quick_add"), shape = CircleShape, containerColor = MaterialTheme.colorScheme.primary) { Icon(Icons.Rounded.Add, contentDescription = labels.addProduct, modifier = Modifier.size(28.dp)) }
                 },
                 floatingActionButtonPosition = FabPosition.Center,
             ) { padding ->

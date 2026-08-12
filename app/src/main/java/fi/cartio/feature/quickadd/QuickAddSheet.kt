@@ -25,6 +25,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -73,7 +74,14 @@ import fi.cartio.feature.shoppinglist.ShoppingListViewModel
                     }
                 }
             }
-            SnackbarHost(snackbar, Modifier.fillMaxWidth().padding(bottom = 8.dp))
+            SnackbarHost(snackbar, Modifier.fillMaxWidth().padding(bottom = 8.dp)) { data ->
+                Snackbar(
+                    snackbarData = data,
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                    actionColor = MaterialTheme.colorScheme.primary,
+                )
+            }
         }
     }
 }
@@ -99,6 +107,6 @@ import fi.cartio.feature.shoppinglist.ShoppingListViewModel
 
 @Composable private fun SuggestionGroup(title: String, values: List<ProductSuggestion>, onAdd: (String) -> Unit) {
     if (values.isEmpty()) return
-    Text(title, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 18.dp, bottom = 6.dp))
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { values.distinctBy { it.name }.forEach { suggestion -> AssistChip(onClick = { onAdd(suggestion.name) }, modifier = Modifier.testTag("suggestion_${suggestion.name.lowercase().replace(' ', '_')}"), shape = RoundedCornerShape(12.dp), colors = AssistChipDefaults.assistChipColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), label = { Text("${productIcon(suggestion.name, suggestion.category)}  ${suggestion.name}", maxLines = 2, overflow = TextOverflow.Ellipsis) }) } }
+    Text(title, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 20.dp, bottom = 8.dp))
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { values.distinctBy { it.name }.forEach { suggestion -> AssistChip(onClick = { onAdd(suggestion.name) }, modifier = Modifier.heightIn(min = 44.dp).testTag("suggestion_${suggestion.name.lowercase().replace(' ', '_')}"), shape = RoundedCornerShape(14.dp), colors = AssistChipDefaults.assistChipColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), label = { Text("${productIcon(suggestion.name, suggestion.category)}  ${suggestion.name}", maxLines = 2, overflow = TextOverflow.Ellipsis) }) } }
 }

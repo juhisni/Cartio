@@ -101,16 +101,14 @@ fun SavedListsRoute(contentPadding: PaddingValues, onRestored: () -> Unit, viewM
             if (state.hasSavedLists) {
                 Text(strings.noMatchingLists, modifier = Modifier.fillMaxWidth().padding(40.dp), color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
             } else {
-                Column(Modifier.fillParentMaxWidth().padding(horizontal = 40.dp, vertical = 72.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Box(Modifier.size(88.dp).background(MaterialTheme.colorScheme.primary.copy(alpha = .1f), RoundedCornerShape(28.dp)), contentAlignment = Alignment.Center) {
-                        Icon(Icons.Outlined.BookmarkBorder, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(42.dp))
-                    }
-                    Text(strings.savedEmptyTitle, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 20.dp))
+                Column(Modifier.fillParentMaxWidth().padding(horizontal = 32.dp, vertical = 48.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(Icons.Outlined.BookmarkBorder, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(52.dp))
+                    Text(strings.savedEmptyTitle, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 18.dp))
                     Text(strings.savedEmptyBody, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 8.dp))
                     Button(
                         onClick = { dialog = DialogState.Save },
-                        shape = RoundedCornerShape(16.dp),
-                        modifier = Modifier.fillMaxWidth().padding(top = 24.dp).height(54.dp).testTag("saved_create_new_list"),
+                        shape = RoundedCornerShape(15.dp),
+                        modifier = Modifier.fillMaxWidth().padding(top = 24.dp).height(52.dp).testTag("saved_create_new_list"),
                     ) { Text(strings.createNewList) }
                 }
             }
