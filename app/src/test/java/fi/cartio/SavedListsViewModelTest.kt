@@ -56,6 +56,18 @@ class SavedListsViewModelTest {
         assertTrue(viewModel.state.value.lists.isEmpty())
         assertTrue(viewModel.state.value.hasSavedLists)
     }
+
+    @Test fun activeListIsAlwaysShownFirst() = runTest(dispatcher) {
+        val repository = SavedListsFakeRepository().apply {
+            activeList.value = ActiveShoppingList(2, "Juhlat", 8, 3)
+        }
+        val viewModel = SavedListsViewModel(repository)
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.state.collect {} }
+
+        advanceUntilIdle()
+
+        assertEquals(listOf(2L, 1L), viewModel.state.value.lists.map { it.id })
+    }
 }
 
 private class SavedListsFakeRepository : CartioRepository {

@@ -30,7 +30,7 @@ Keep every trip organized:
 • Switch between English and Finnish  
 • Use light, dark, or system theme
 
-Cartio is designed to work completely offline. Your shopping lists and preferences are stored locally on your device. The app has no user accounts, advertising, analytics, or cloud service operated by Cartio. Depending on your Android settings, app data may be included in Android system backup or device transfer.
+Cartio is designed to work completely offline. Your shopping lists and preferences are stored locally on your device. The app has no user accounts, advertising, analytics, or cloud service operated by Cartio. Cartio excludes app data from Android cloud backup and device-to-device transfer.
 
 Whether you are planning a weekly grocery trip or a short visit to the store, Cartio keeps the process calm, clear, and efficient.
 
@@ -63,7 +63,7 @@ Pidä jokainen kauppareissu järjestyksessä:
 • Vaihda suomen ja englannin välillä  
 • Käytä vaaleaa, tummaa tai järjestelmän mukaista teemaa
 
-Cartio on suunniteltu toimimaan kokonaan ilman verkkoyhteyttä. Ostoslistasi ja asetuksesi tallennetaan paikallisesti laitteellesi. Sovelluksessa ei ole käyttäjätilejä, mainontaa, analytiikkaa tai Cartion ylläpitämää pilvipalvelua. Android-asetuksistasi riippuen sovelluksen tiedot voidaan sisällyttää Androidin järjestelmävarmuuskopioon tai laitteiden väliseen siirtoon.
+Cartio on suunniteltu toimimaan kokonaan ilman verkkoyhteyttä. Ostoslistasi ja asetuksesi tallennetaan paikallisesti laitteellesi. Sovelluksessa ei ole käyttäjätilejä, mainontaa, analytiikkaa tai Cartion ylläpitämää pilvipalvelua. Cartio sulkee sovelluksen tiedot pois Androidin pilvivarmuuskopioista ja laitteiden välisestä siirrosta.
 
 Suunnittelitpa viikon ruokaostoksia tai nopeaa kaupassakäyntiä, Cartio pitää ostamisen rauhallisena, selkeänä ja tehokkaana.
 

@@ -20,8 +20,12 @@ class SettingsRepository @Inject constructor(@param:ApplicationContext private v
     private val theme = stringPreferencesKey("theme")
     val settings: Flow<AppSettings> = context.dataStore.data.map { preferences ->
         AppSettings(
-            language = preferences[language]?.let(AppLanguage::valueOf) ?: AppLanguage.ENGLISH,
-            theme = preferences[theme]?.let(ThemePreference::valueOf) ?: ThemePreference.SYSTEM,
+            language = preferences[language]?.let { stored ->
+                AppLanguage.entries.firstOrNull { it.name == stored }
+            } ?: AppLanguage.ENGLISH,
+            theme = preferences[theme]?.let { stored ->
+                ThemePreference.entries.firstOrNull { it.name == stored }
+            } ?: ThemePreference.SYSTEM,
         )
     }
     suspend fun setLanguage(value: AppLanguage) { context.dataStore.edit { it[language] = value.name } }

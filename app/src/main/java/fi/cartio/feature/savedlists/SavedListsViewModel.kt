@@ -21,8 +21,9 @@ import kotlinx.coroutines.flow.receiveAsFlow
 class SavedListsViewModel @Inject constructor(private val repository: CartioRepository) : ViewModel() {
     private val query = MutableStateFlow("")
     val state: StateFlow<SavedListsUiState> = combine(repository.savedLists, repository.activeList, query) { lists, active, search ->
+        val filtered = if (search.isBlank()) lists else lists.filter { it.name.contains(search.trim(), ignoreCase = true) }
         SavedListsUiState(
-            lists = if (search.isBlank()) lists else lists.filter { it.name.contains(search.trim(), ignoreCase = true) },
+            lists = filtered.sortedByDescending { it.id == active?.savedListId },
             query = search,
             hasSavedLists = lists.isNotEmpty(),
             activeListId = active?.savedListId,

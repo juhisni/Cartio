@@ -10,14 +10,18 @@ import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    private var brandedSplashVisible = true
+    private var brandedSplashVisible = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        WindowCompat.getInsetsController(window, window.decorView).hide(WindowInsetsCompat.Type.systemBars())
+        brandedSplashVisible = savedInstanceState == null
+        if (brandedSplashVisible) {
+            WindowCompat.getInsetsController(window, window.decorView).hide(WindowInsetsCompat.Type.systemBars())
+        }
         setContent {
             CartioApp(
+                showBrandedSplash = savedInstanceState == null,
                 onSplashFinished = {
                     brandedSplashVisible = false
                     WindowCompat.getInsetsController(window, window.decorView).show(WindowInsetsCompat.Type.systemBars())

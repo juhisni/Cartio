@@ -14,7 +14,7 @@ Cartio:
 - requests no sensitive device permissions;
 - stores shopping lists, product history, and preferences locally;
 - does not transmit user data to the developer or third parties; and
-- allows Android's operating-system backup or device-transfer service to handle eligible local app data according to the user's device settings.
+- excludes app data from Android cloud backup and device-to-device transfer.
 
 Google Play defines collection as transmitting user data off the device. Data that is accessed and processed only on-device is outside the scope of Data safety collection. On the audited build, Cartio therefore does not collect or share any Google Play user-data type.
 
@@ -38,7 +38,7 @@ Use this public URL:
 
 ### Account deletion
 
-Cartio does not allow account creation, so Google Play's account-deletion requirement does not apply. Users can delete local content inside the app, clear Cartio's storage in Android settings, or uninstall Cartio. Android backup retention is controlled by the user's platform provider and device settings.
+Cartio does not allow account creation, so Google Play's account-deletion requirement does not apply. Users can delete local content inside the app, clear Cartio's storage in Android settings, or uninstall Cartio. Cartio excludes app data from Android cloud backup and device-to-device transfer.
 
 ### Security-review claims
 
