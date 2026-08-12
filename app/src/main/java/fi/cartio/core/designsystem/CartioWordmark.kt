@@ -42,7 +42,7 @@ fun CartioWordmark(
                         drawCircle(
                             color = dotColor,
                             radius = radius,
-                            center = androidx.compose.ui.geometry.Offset(bounds.center.x, bounds.top + radius * 0.8f),
+                            center = androidx.compose.ui.geometry.Offset(bounds.center.x, bounds.top + radius * 1.9f),
                         )
                     }
                 }
