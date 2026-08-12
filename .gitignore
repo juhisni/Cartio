@@ -13,3 +13,7 @@
 .externalNativeBuild
 .cxx
 local.properties
+# Release signing secrets and private keys must never be committed.
+keystore.properties
+*.jks
+*.keystore
