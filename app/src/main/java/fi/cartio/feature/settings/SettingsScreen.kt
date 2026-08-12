@@ -91,13 +91,13 @@ fun SettingsRoute(viewModel: SettingsViewModel, contentPadding: PaddingValues) {
                 }
                 Text(strings.aboutSummary, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp))
                 HorizontalDivider(Modifier.padding(horizontal = 16.dp, vertical = 12.dp), color = MaterialTheme.colorScheme.outlineVariant)
-                Text(strings.developerAndSupport, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
+                Text(strings.developerAndSupport, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
                 AboutInfoRow(Icons.Outlined.Person, strings.developedBy, "Juha-Matti Niiranen")
                 AboutInfoRow(Icons.Outlined.Email, strings.contactSupport, "cartiosupport@gmail.com") {
                     uriHandler.openUri("mailto:cartiosupport@gmail.com?subject=Cartio%20support")
                 }
                 HorizontalDivider(Modifier.padding(horizontal = 16.dp, vertical = 12.dp), color = MaterialTheme.colorScheme.outlineVariant)
-                Text(strings.privacyAndData, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
+                Text(strings.privacyAndData, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
                 AboutInfoRow(Icons.Outlined.Policy, strings.privacyPolicy, strings.privacyPolicyBody) {
                     uriHandler.openUri("https://juhisni.github.io/Cartio/privacy/")
                 }
@@ -106,7 +106,7 @@ fun SettingsRoute(viewModel: SettingsViewModel, contentPadding: PaddingValues) {
                 AboutInfoRow(Icons.Outlined.Save, strings.androidBackup, strings.androidBackupBody)
                 AboutInfoRow(Icons.Outlined.CheckCircle, strings.permissions, strings.permissionsBody)
                 HorizontalDivider(Modifier.padding(horizontal = 16.dp, vertical = 12.dp), color = MaterialTheme.colorScheme.outlineVariant)
-                Text(strings.legalAndLicenses, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
+                Text(strings.legalAndLicenses, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
                 AboutInfoRow(Icons.Outlined.Gavel, strings.copyrightNotice, strings.allRightsReserved)
                 AboutInfoRow(Icons.Outlined.Policy, strings.legalNotices, strings.legalNoticesBody) {
                     uriHandler.openUri("https://juhisni.github.io/Cartio/legal/")
@@ -122,7 +122,7 @@ private fun AboutInfoRow(icon: ImageVector, title: String, body: String? = null,
     Row(modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.Top) {
         Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
         Column(Modifier.padding(start = 12.dp)) {
-            Text(title, fontWeight = if (body == null) FontWeight.Normal else FontWeight.SemiBold, color = if (body == null) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface)
+            Text(title, style = MaterialTheme.typography.bodyMedium, fontWeight = if (body == null) FontWeight.Normal else FontWeight.SemiBold, color = if (body == null) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface)
             body?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp)) }
         }
     }
@@ -130,7 +130,7 @@ private fun AboutInfoRow(icon: ImageVector, title: String, body: String? = null,
 
 @Composable private fun SettingsCard(icon: ImageVector, title: String, content: @Composable () -> Unit) {
     Card(Modifier.fillMaxWidth().padding(bottom = 12.dp), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
-        Row(Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) { Icon(icon, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp)); Text(title, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(start = 10.dp)) }
+        Row(Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) { Icon(icon, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp)); Text(title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(start = 10.dp)) }
         Column(Modifier.padding(bottom = 12.dp), content = { content() })
     }
 }

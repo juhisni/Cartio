@@ -259,7 +259,7 @@ private fun NoActiveListState(onCreate: () -> Unit, onOpenSaved: () -> Unit) {
     val strings = LocalStrings.current
     Column(Modifier.fillMaxWidth().padding(horizontal = 28.dp, vertical = 40.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         Image(painterResource(R.drawable.cartio_foreground), contentDescription = null, modifier = Modifier.size(92.dp))
-        Text(strings.whatWouldYouLike, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 18.dp))
+        Text(strings.whatWouldYouLike, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 18.dp))
         Button(onClick = onCreate, shape = RoundedCornerShape(15.dp), modifier = Modifier.fillMaxWidth().padding(top = 24.dp).height(52.dp).testTag("create_new_list")) { Text(strings.createNewList) }
         OutlinedButton(onClick = onOpenSaved, shape = RoundedCornerShape(15.dp), modifier = Modifier.fillMaxWidth().padding(top = 10.dp).height(52.dp)) { Text(strings.openSavedLists) }
         Row(Modifier.padding(top = 28.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -368,7 +368,7 @@ private fun SwitchListSheet(active: ActiveShoppingList?, lists: List<SavedShoppi
                     Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text(list.icon.symbol, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(end = 12.dp))
                         Column(Modifier.weight(1f)) {
-                            Text(list.name, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(list.name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                             val itemCount = if (selected) active.itemCount else list.itemCount
                             val completedCount = if (selected) active.completedCount else list.completedCount
                             Text(strings.listProgress.format(itemCount, completedCount), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -430,7 +430,7 @@ private fun ProductRow(product: ShoppingItem, onToggle: (ShoppingItem) -> Unit, 
     ) {
         Text(productIcon(product.name, product.category), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(end = 12.dp))
         Column(Modifier.weight(1f).padding(vertical = 9.dp)) {
-            Text(product.name, fontWeight = FontWeight.Medium, textDecoration = if (product.checked) TextDecoration.LineThrough else null, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text(product.name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium, textDecoration = if (product.checked) TextDecoration.LineThrough else null, maxLines = 2, overflow = TextOverflow.Ellipsis)
             product.quantity?.let { Text(formatQuantity(it, product.unit), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         }
         Box(
