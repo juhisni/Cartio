@@ -40,7 +40,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.material3.MaterialTheme
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import fi.cartio.core.localization.LocalStrings
@@ -57,7 +56,7 @@ import fi.cartio.feature.shoppinglist.ShoppingListViewModel
     LaunchedEffect(viewModel) { viewModel.feedback.collect { snackbar.showSnackbar("$it ${text.added}"); focus.requestFocus(); keyboard?.show() } }
     ModalBottomSheet(onDismissRequest = onDismiss, shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp), containerColor = MaterialTheme.colorScheme.surface, dragHandle = { androidx.compose.material3.BottomSheetDefaults.DragHandle(width = 44.dp) }) {
         Column(Modifier.fillMaxWidth().fillMaxHeight(.82f).imePadding().padding(horizontal = 20.dp)) {
-            Text(text.addProduct, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 14.dp))
+            Text(text.addProduct, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 14.dp))
             OutlinedTextField(value = state.query, onValueChange = viewModel::setQuery, modifier = Modifier.fillMaxWidth().focusRequester(focus).testTag("quick_add_input"), shape = RoundedCornerShape(16.dp), singleLine = true, placeholder = { Text(text.searchHint) }, leadingIcon = { Icon(Icons.Outlined.Search, null) }, keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done), keyboardActions = KeyboardActions(onDone = { viewModel.add() }))
             Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
                 if (state.query.isBlank()) {

@@ -84,7 +84,7 @@ fun SettingsRoute(viewModel: SettingsViewModel, contentPadding: PaddingValues) {
                 Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                     Image(painterResource(R.drawable.cartio_foreground), contentDescription = null, modifier = Modifier.size(64.dp))
                     Column(Modifier.padding(start = 14.dp)) {
-                        Text("Cartio", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Text("Cartio", style = MaterialTheme.typography.titleLarge)
                         Text(strings.aboutTagline, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
                         Text(strings.versionFormat.format(version.first, version.second), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }

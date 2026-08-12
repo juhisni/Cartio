@@ -236,7 +236,7 @@ fun ShoppingListScreen(
             Column(Modifier.fillParentMaxSize().padding(horizontal = 48.dp, vertical = 72.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
                 Image(painterResource(R.drawable.cartio_foreground), contentDescription = null, modifier = Modifier.size(110.dp))
                 Spacer(Modifier.height(24.dp))
-                Text(LocalStrings.current.emptyTitle, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+                Text(LocalStrings.current.emptyTitle, style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
                 Text(LocalStrings.current.emptyBody, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.fillMaxWidth().padding(top = 10.dp), style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Center)
             }
         }
@@ -259,7 +259,7 @@ private fun NoActiveListState(onCreate: () -> Unit, onOpenSaved: () -> Unit) {
     val strings = LocalStrings.current
     Column(Modifier.fillMaxWidth().padding(horizontal = 28.dp, vertical = 40.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         Image(painterResource(R.drawable.cartio_foreground), contentDescription = null, modifier = Modifier.size(92.dp))
-        Text(strings.whatWouldYouLike, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 18.dp))
+        Text(strings.whatWouldYouLike, style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 18.dp))
         Button(onClick = onCreate, shape = RoundedCornerShape(15.dp), modifier = Modifier.fillMaxWidth().padding(top = 24.dp).height(52.dp).testTag("create_new_list")) { Text(strings.createNewList) }
         OutlinedButton(onClick = onOpenSaved, shape = RoundedCornerShape(15.dp), modifier = Modifier.fillMaxWidth().padding(top = 10.dp).height(52.dp)) { Text(strings.openSavedLists) }
         Row(Modifier.padding(top = 28.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -283,8 +283,8 @@ private fun ActiveListCard(active: ActiveShoppingList, onSwitch: () -> Unit, onE
             Row(Modifier.weight(1f).clickable(role = Role.Button, onClick = onSwitch).padding(start = 16.dp, top = 12.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(active.icon.symbol, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(end = 12.dp))
                 Column(Modifier.weight(1f)) {
-                    Text(strings.currentList, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-                    Text(active.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(strings.currentList, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                    Text(active.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text(strings.listProgress.format(active.itemCount, active.completedCount), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Icon(Icons.Outlined.KeyboardArrowDown, strings.switchList)
@@ -319,7 +319,7 @@ private fun EditListSheet(active: ActiveShoppingList, onDismiss: () -> Unit, onS
     val strings = LocalStrings.current
     ModalBottomSheet(onDismissRequest = onDismiss, shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)) {
         Column(Modifier.fillMaxWidth().imePadding().padding(horizontal = 20.dp, vertical = 8.dp).padding(bottom = 24.dp)) {
-            Text(strings.editList, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 16.dp))
+            Text(strings.editList, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 16.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
                 SavedListIconPicker(icon, strings.listIcon) { icon = it }
                 OutlinedTextField(name, { name = it }, label = { Text(strings.listName) }, singleLine = true, shape = RoundedCornerShape(16.dp), modifier = Modifier.weight(1f))
@@ -338,7 +338,7 @@ private fun CreateListSheet(onDismiss: () -> Unit, onCreate: (String, SavedListI
     val strings = LocalStrings.current
     ModalBottomSheet(onDismissRequest = onDismiss, shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)) {
         Column(Modifier.fillMaxWidth().imePadding().padding(horizontal = 20.dp, vertical = 8.dp).padding(bottom = 24.dp)) {
-            Text(strings.createNewList, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 16.dp))
+            Text(strings.createNewList, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 16.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
                 SavedListIconPicker(icon, strings.listIcon) { icon = it }
                 OutlinedTextField(name, { name = it }, label = { Text(strings.listName) }, singleLine = true, shape = RoundedCornerShape(16.dp), modifier = Modifier.weight(1f).testTag("new_list_name"))
@@ -356,7 +356,7 @@ private fun SwitchListSheet(active: ActiveShoppingList?, lists: List<SavedShoppi
     val orderedLists = lists.sortedByDescending { if (it.id == active?.savedListId) 1 else 0 }
     ModalBottomSheet(onDismissRequest = onDismiss, shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(bottom = 24.dp)) {
-            Text(strings.switchList, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.CenterHorizontally).padding(bottom = 14.dp))
+            Text(strings.switchList, style = MaterialTheme.typography.titleLarge, modifier = Modifier.align(Alignment.CenterHorizontally).padding(bottom = 14.dp))
             orderedLists.forEach { list ->
                 val selected = list.id == active?.savedListId
                 Surface(
@@ -373,7 +373,7 @@ private fun SwitchListSheet(active: ActiveShoppingList?, lists: List<SavedShoppi
                             val completedCount = if (selected) active.completedCount else list.completedCount
                             Text(strings.listProgress.format(itemCount, completedCount), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
-                        if (selected) Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surface) { Text(strings.active, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp)) }
+                        if (selected) Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surface) { Text(strings.active, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp)) }
                     }
                 }
             }
@@ -402,8 +402,8 @@ private fun CategoryHeader(category: ProductCategory, count: Int, collapsed: Boo
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(categoryIcon(category), modifier = Modifier.padding(end = 9.dp, top = 12.dp, bottom = 12.dp))
-        Text(categoryName(category), modifier = Modifier.weight(1f), color = tint, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelLarge)
-        Surface(shape = CircleShape, color = tint.copy(alpha = .14f)) { Text(count.toString(), color = tint, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 9.dp, vertical = 3.dp)) }
+        Text(categoryName(category), modifier = Modifier.weight(1f), color = tint, style = MaterialTheme.typography.labelLarge)
+        Surface(shape = CircleShape, color = tint.copy(alpha = .14f)) { Text(count.toString(), color = tint, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(horizontal = 9.dp, vertical = 3.dp)) }
         Icon(if (collapsed) Icons.Outlined.ExpandMore else Icons.Outlined.ExpandLess, contentDescription = null, tint = tint, modifier = Modifier.padding(start = 4.dp).size(24.dp))
     }
 }
@@ -490,7 +490,7 @@ private fun ProductEditorSheet(item: ShoppingItem, onDismiss: () -> Unit, onSave
     val strings = LocalStrings.current
     ModalBottomSheet(onDismissRequest = onDismiss, shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)) {
         Column(Modifier.fillMaxWidth().imePadding().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 28.dp)) {
-            Text(strings.editProduct, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 16.dp))
+            Text(strings.editProduct, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 16.dp))
             OutlinedTextField(name, { name = it }, label = { Text(strings.productName) }, singleLine = true, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth())
             Row(Modifier.fillMaxWidth().padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 OutlinedTextField(quantity, { value -> quantity = value.filter { it.isDigit() || it == '.' || it == ',' } }, label = { Text(strings.quantity) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), shape = RoundedCornerShape(14.dp), modifier = Modifier.weight(1f))
