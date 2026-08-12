@@ -68,6 +68,9 @@ fun CartioApp(
     onSplashFinished: () -> Unit = {},
     onDarkThemeChanged: (Boolean) -> Unit = {},
 ) {
+    val preferences by settingsViewModel.settings.collectAsStateWithLifecycle()
+    val dark = when (preferences.theme) { ThemePreference.DARK -> true; ThemePreference.LIGHT -> false; ThemePreference.SYSTEM -> isSystemInDarkTheme() }
+    SideEffect { onDarkThemeChanged(dark) }
     var showSplash by rememberSaveable { mutableStateOf(true) }
     LaunchedEffect(Unit) {
         delay(900)
@@ -75,20 +78,19 @@ fun CartioApp(
         onSplashFinished()
     }
     if (showSplash) {
-        Image(
-            painter = painterResource(R.drawable.cartio_splash),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            alignment = Alignment.Center,
-            modifier = Modifier.fillMaxSize(),
-        )
+        CartioTheme(darkTheme = dark) {
+            Image(
+                painter = painterResource(if (dark) R.drawable.cartio_splash_dark else R.drawable.cartio_splash_light),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                alignment = Alignment.Center,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
         return
     }
-    val preferences by settingsViewModel.settings.collectAsStateWithLifecycle()
     val shoppingState by shoppingViewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(preferences.language) { shoppingViewModel.setLanguage(preferences.language) }
-    val dark = when (preferences.theme) { ThemePreference.DARK -> true; ThemePreference.LIGHT -> false; ThemePreference.SYSTEM -> isSystemInDarkTheme() }
-    SideEffect { onDarkThemeChanged(dark) }
     CartioTheme(darkTheme = dark) {
         CompositionLocalProvider(LocalStrings provides strings(preferences.language)) {
             val nav = rememberNavController()
