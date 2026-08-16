@@ -58,20 +58,23 @@ import fi.cartio.feature.shoppinglist.ShoppingListViewModel
         Column(Modifier.fillMaxWidth().fillMaxHeight(.82f).imePadding().padding(horizontal = 20.dp)) {
             Text(text.addProduct, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 14.dp))
             OutlinedTextField(value = state.query, onValueChange = viewModel::setQuery, modifier = Modifier.fillMaxWidth().focusRequester(focus).testTag("quick_add_input"), shape = RoundedCornerShape(16.dp), singleLine = true, placeholder = { Text(text.searchHint) }, leadingIcon = { Icon(Icons.Outlined.Search, null) }, keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done), keyboardActions = KeyboardActions(onDone = { viewModel.addCatalogMatch() }))
-            Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-                if (state.query.isBlank()) {
+            if (state.query.isBlank()) {
+                Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
                     SuggestionGroup(text.recent, state.recent, viewModel::add)
                     SuggestionGroup(text.frequent, state.frequent, viewModel::add)
-                } else {
-                    SuggestionGroup(text.addProduct, state.suggestions, viewModel::add)
-                    if (state.canAddQuery) {
-                        CustomProductAction(
-                            heading = text.productNotFound,
-                            action = text.addTypedProduct.format(state.query.trim()),
-                            onAdd = viewModel::addCustomProduct,
-                        )
-                    }
                 }
+            } else {
+                Column(Modifier.fillMaxWidth().heightIn(max = 180.dp).verticalScroll(rememberScrollState())) {
+                    SuggestionGroup(text.addProduct, state.suggestions, viewModel::add)
+                }
+                if (state.canAddQuery && !state.hasExactCatalogMatch) {
+                    CustomProductAction(
+                        heading = text.productNotFound,
+                        action = text.addTypedProduct.format(state.query.trim()),
+                        onAdd = viewModel::addCustomProduct,
+                    )
+                }
+                Column(Modifier.weight(1f)) {}
             }
             SnackbarHost(snackbar, Modifier.fillMaxWidth().padding(bottom = 8.dp)) { data ->
                 Snackbar(
@@ -86,7 +89,7 @@ import fi.cartio.feature.shoppinglist.ShoppingListViewModel
 }
 
 @Composable private fun CustomProductAction(heading: String, action: String, onAdd: () -> Unit) {
-    Column(Modifier.fillMaxWidth().padding(top = 20.dp, bottom = 8.dp)) {
+    Column(Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 8.dp)) {
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         Text(
             heading,

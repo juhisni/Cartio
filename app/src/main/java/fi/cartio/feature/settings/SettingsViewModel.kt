@@ -18,4 +18,5 @@ class SettingsViewModel @Inject constructor(private val repository: SettingsRepo
     val settings: StateFlow<AppSettings> = repository.settings.stateIn(viewModelScope, SharingStarted.Eagerly, AppSettings())
     fun language(value: AppLanguage) { viewModelScope.launch { repository.setLanguage(value) } }
     fun theme(value: ThemePreference) { viewModelScope.launch { repository.setTheme(value) } }
+    fun markReorderHintShown() { viewModelScope.launch { repository.markReorderHintShown() } }
 }

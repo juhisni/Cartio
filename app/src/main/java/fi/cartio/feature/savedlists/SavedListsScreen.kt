@@ -1,6 +1,7 @@
 package fi.cartio.feature.savedlists
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -68,6 +69,7 @@ import fi.cartio.core.model.SavedListIcon
 fun SavedListsRoute(contentPadding: PaddingValues, onRestored: () -> Unit, viewModel: SavedListsViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var dialog by remember { mutableStateOf<DialogState?>(null) }
+    var confirmingDelete by remember { mutableStateOf<SavedShoppingList?>(null) }
     val strings = LocalStrings.current
     val snackbar = remember { SnackbarHostState() }
     LaunchedEffect(viewModel, strings.undo) {
@@ -114,7 +116,7 @@ fun SavedListsRoute(contentPadding: PaddingValues, onRestored: () -> Unit, viewM
             }
         }
         items(state.lists, key = { it.id }) { list ->
-            SavedListCard(list, isActive = state.activeListId == list.id, onRestore = { viewModel.restore(list.id); onRestored() }, onRename = { dialog = DialogState.Rename(list) }, onDuplicate = { viewModel.duplicate(list.id, strings.duplicateListName.format(list.name)) }, onDelete = { viewModel.delete(list.id) })
+            SavedListCard(list, isActive = state.activeListId == list.id, onOpen = { viewModel.restore(list.id); onRestored() }, onRename = { dialog = DialogState.Rename(list) }, onDuplicate = { viewModel.duplicate(list.id, strings.duplicateListName.format(list.name)) }, onDelete = { confirmingDelete = list })
         }
         }
         SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).padding(bottom = contentPadding.calculateBottomPadding() + 16.dp)) { data ->
@@ -141,13 +143,29 @@ fun SavedListsRoute(contentPadding: PaddingValues, onRestored: () -> Unit, viewM
             },
         )
     }
+    confirmingDelete?.let { list ->
+        AlertDialog(
+            onDismissRequest = { confirmingDelete = null },
+            containerColor = MaterialTheme.colorScheme.surface,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            title = { Text(strings.deleteList) },
+            text = { Text(strings.deleteListConfirmation.format(list.name)) },
+            confirmButton = {
+                TextButton(onClick = { confirmingDelete = null; viewModel.delete(list.id) }) {
+                    Text(strings.delete)
+                }
+            },
+            dismissButton = { TextButton(onClick = { confirmingDelete = null }) { Text(strings.cancel) } },
+        )
+    }
 }
 
 @Composable
-private fun SavedListCard(list: SavedShoppingList, isActive: Boolean, onRestore: () -> Unit, onRename: () -> Unit, onDuplicate: () -> Unit, onDelete: () -> Unit) {
+private fun SavedListCard(list: SavedShoppingList, isActive: Boolean, onOpen: () -> Unit, onRename: () -> Unit, onDuplicate: () -> Unit, onDelete: () -> Unit) {
     var menuExpanded by remember { mutableStateOf(false) }
     val strings = LocalStrings.current
-    Card(Modifier.fillMaxWidth().padding(horizontal = 20.dp), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+    Card(Modifier.fillMaxWidth().padding(horizontal = 20.dp).clickable(enabled = !isActive, onClick = onOpen), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
         Row(Modifier.fillMaxWidth().padding(start = 12.dp, top = 12.dp, bottom = 12.dp, end = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(48.dp).background(MaterialTheme.colorScheme.primary.copy(alpha = .14f), RoundedCornerShape(14.dp)), contentAlignment = Alignment.Center) { Text(list.icon.symbol, style = MaterialTheme.typography.titleLarge) }
             Column(Modifier.weight(1f).padding(start = 12.dp)) {
@@ -156,7 +174,7 @@ private fun SavedListCard(list: SavedShoppingList, isActive: Boolean, onRestore:
             }
             if (isActive) {
                 Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer) { Text(strings.active, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp)) }
-            } else TextButton(onClick = onRestore) { Text(strings.restore) }
+            } else TextButton(onClick = onOpen) { Text(strings.restore) }
             Box {
                 IconButton(onClick = { menuExpanded = true }) { Icon(Icons.Outlined.MoreVert, strings.moreOptions) }
                 DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {

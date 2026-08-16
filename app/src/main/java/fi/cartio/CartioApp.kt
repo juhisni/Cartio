@@ -117,7 +117,16 @@ fun CartioApp(
             ) { padding ->
                 Box(Modifier.fillMaxSize()) {
                     NavHost(navController = nav, startDestination = Destination.Main.route) {
-                        composable(Destination.Main.route) { ShoppingListRoute(shoppingViewModel, padding, onOpenSavedLists = { nav.navigate(Destination.Saved.route) }) }
+                        composable(Destination.Main.route) {
+                            ShoppingListRoute(
+                                viewModel = shoppingViewModel,
+                                contentPadding = padding,
+                                onOpenSavedLists = { nav.navigate(Destination.Saved.route) },
+                                onAddProduct = { quickAdd = true },
+                                shouldShowReorderHint = !preferences.reorderHintShown,
+                                onReorderHintShown = settingsViewModel::markReorderHintShown,
+                            )
+                        }
                         composable(Destination.Saved.route) { SavedListsRoute(contentPadding = padding, onRestored = { nav.navigate(Destination.Main.route) }) }
                         composable(Destination.Settings.route) { SettingsRoute(settingsViewModel, padding) }
                     }

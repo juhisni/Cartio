@@ -37,18 +37,19 @@ data class CartioStrings(
     val markedIncomplete: String, val completedRemoved: String, val listDeleted: String,
     val shareList: String, val shareListWith: String,
     val duplicateList: String, val duplicateListName: String, val suggestedUnits: String,
+    val addFirstProduct: String,
 )
 
 val LocalStrings = staticCompositionLocalOf { strings(AppLanguage.ENGLISH) }
 fun strings(language: AppLanguage) = if (language == AppLanguage.FINNISH) CartioStrings(
     "Ostoslista", "Päänäkymä", "Tallennetut", "Asetukset", "Lisää tuote", "Hae tai kirjoita tuote",
-    "Viimeksi lisätyt", "Usein lisätyt", "Lista on vielä tyhjä", "Lisää ensimmäinen tuote nopeasti plus-painikkeesta.",
-    "Tallenna lista", "Listan nimi", "Ota käyttöön", "Nimeä uudelleen", "Poista", "Kieli / Language", "Teema", "Tietoja sovelluksesta",
+    "Viimeksi lisätyt", "Usein lisätyt", "Lista on vielä tyhjä", "Aloita lisäämällä ensimmäinen tarvitsemasi tuote.",
+    "Tallenna lista", "Listan nimi", "Avaa", "Nimeä uudelleen", "Poista", "Kieli / Language", "Teema", "Tietoja sovelluksesta",
     "Vaalea", "Tumma", "Järjestelmän mukaan", "Suomi", "English", "Peruuta", "Tallenna", "lisätty",
     "Muokkaa tuotetta", "Tuotteen nimi", "Määrä", "Yksikkö", "Kategoria", "poistettu", "Kumoa", "Laajenna kategoria", "Tiivistä kategoria",
     "Hae listoja", "Hakua vastaavia listoja ei löytynyt", "Tuoteluettelo: Fineli / THL, CC BY 4.0", "Lisää ”%s” listalle", "Etkö löytänyt etsimääsi tuotetta?",
     "Ei tallennettuja listoja", "Tallenna usein käyttämäsi ostoslista, niin saat sen myöhemmin käyttöön yhdellä napautuksella.", "%d tuotetta", "Lisää toimintoja", "Nopea, rauhallinen ja täysin offline.",
-    "Mitä haluaisit tehdä?", "Luo uusi lista", "Avaa tallennetut listat", "Listasi säilyvät tällä laitteella", "Luo lista", "NYKYINEN LISTA", "%d tuotetta · %d valmiina", "Vaihda listaa", "Käytössä", "Hallitse tallennettuja listoja", "Järjestä vetämällä", "Siirrä ylös", "Siirrä alas", "Listan ikoni",
+    "Mitä haluaisit tehdä?", "Luo uusi lista", "Avaa tallennetut listat", "Listasi säilyvät tällä laitteella", "Luo lista", "NYKYINEN LISTA", "%d tuotetta · %d valmiina", "Vaihda listaa", "Käytössä", "Hallitse tallennettuja listoja", "Paina pitkään tuotetta tai kategoriaa ja vedä järjestääksesi", "Siirrä ylös", "Siirrä alas", "Listan ikoni",
     "Ostokset yksinkertaisemmin.", "Nopea ja offline-ensisijainen ostoslista jokapäiväiseen käyttöön.", "Yksityisyys ja tiedot",
     "Ei käyttäjätiliä, mainoksia, analytiikkaa tai verkkoyhteyttä. Cartio ei lähetä listojasi minnekään.", "Tallennettu laitteelle", "Listat, asetukset ja tuotehistoria tallennetaan paikallisesti laitteellesi.",
     "Varmuuskopiot", "Cartio ei sisällytä listojasi Androidin pilvivarmuuskopioihin tai laitteiden väliseen siirtoon.", "Käyttöoikeudet", "Cartio ei tällä hetkellä pyydä laitteesi käyttöoikeuksia.", "Versio %s (%d)",
@@ -60,16 +61,17 @@ fun strings(language: AppLanguage) = if (language == AppLanguage.FINNISH) Cartio
     "Poista ostetut tuotteet", "Poista lista", "Haluatko varmasti poistaa listan ”%s”?",
     "Kaikki tuotteet merkittiin ostamattomiksi", "Ostetut tuotteet poistettiin", "Lista poistettiin",
     "Jaa lista tekstinä", "Jaa ostoslista sovelluksella",
-    "Monista lista", "%s – kopio", "Yksikköehdotukset"
+    "Monista lista", "%s – kopio", "Yksikköehdotukset",
+    "Lisää ensimmäinen tuote"
 ) else CartioStrings(
     "Shopping list", "Main", "Saved", "Settings", "Add product", "Search or type a product",
-    "Recently added", "Frequently added", "Your list is empty", "Add your first product quickly with the plus button.",
-    "Save list", "List name", "Use list", "Rename", "Delete", "Language", "Theme", "About Cartio",
+    "Recently added", "Frequently added", "Your list is empty", "Start by adding the first product you need.",
+    "Save list", "List name", "Open", "Rename", "Delete", "Language", "Theme", "About Cartio",
     "Light", "Dark", "System default", "Finnish", "English", "Cancel", "Save", "added",
     "Edit product", "Product name", "Quantity", "Unit", "Category", "removed", "Undo", "Expand category", "Collapse category",
     "Search lists", "No matching lists found", "Product catalog: Fineli / THL, CC BY 4.0", "Add “%s” to list", "Didn't find the product you were looking for?",
-    "No saved lists", "Save a shopping list you use often and restore it later with one tap.", "%d items", "More options", "Fast, calm, and completely offline.",
-    "What would you like to do?", "Create new list", "Open saved lists", "Your lists stay on this device", "Create list", "CURRENT LIST", "%d items · %d completed", "Switch list", "Active", "Manage saved lists", "Drag to reorder", "Move up", "Move down", "List icon",
+    "No saved lists", "Save a shopping list you use often and open it later with one tap.", "%d items", "More options", "Fast, calm, and completely offline.",
+    "What would you like to do?", "Create new list", "Open saved lists", "Your lists stay on this device", "Create list", "CURRENT LIST", "%d items · %d completed", "Switch list", "Active", "Manage saved lists", "Long-press an item or category and drag to reorder", "Move up", "Move down", "List icon",
     "Shopping, simplified.", "A fast, offline-first shopping list designed for everyday errands.", "Privacy & data",
     "No account, ads, analytics, or network access. Cartio does not send your lists anywhere.", "Stored on your device", "Lists, preferences, and product history are stored locally on your device.",
     "Backups", "Cartio excludes your lists from Android cloud backups and device-to-device transfers.", "Permissions", "Cartio currently requests no device permissions.", "Version %s (%d)",
@@ -81,7 +83,8 @@ fun strings(language: AppLanguage) = if (language == AppLanguage.FINNISH) Cartio
     "Remove completed products", "Delete list", "Are you sure you want to delete “%s”?",
     "All products marked as not completed", "Completed products removed", "List deleted",
     "Share list as text", "Share shopping list with",
-    "Duplicate list", "%s – copy", "Suggested units"
+    "Duplicate list", "%s – copy", "Suggested units",
+    "Add first product"
 )
 
 @Composable fun categoryName(category: ProductCategory): String {

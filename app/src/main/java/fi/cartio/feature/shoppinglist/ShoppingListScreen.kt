@@ -117,10 +117,18 @@ import fi.cartio.core.model.suggestedUnits
 import fi.cartio.ui.theme.CartioTheme
 import fi.cartio.R
 import kotlin.math.abs
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ShoppingListRoute(viewModel: ShoppingListViewModel, contentPadding: PaddingValues, onOpenSavedLists: () -> Unit) {
+fun ShoppingListRoute(
+    viewModel: ShoppingListViewModel,
+    contentPadding: PaddingValues,
+    onOpenSavedLists: () -> Unit,
+    onAddProduct: () -> Unit,
+    shouldShowReorderHint: Boolean,
+    onReorderHintShown: () -> Unit,
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var editing by remember { mutableStateOf<ShoppingItem?>(null) }
     var creatingList by remember { mutableStateOf(false) }
@@ -152,6 +160,7 @@ fun ShoppingListRoute(viewModel: ShoppingListViewModel, contentPadding: PaddingV
             state, contentPadding, viewModel::toggle, viewModel::remove,
             onEdit = { editing = it },
             onCreateList = { creatingList = true },
+            onAddProduct = onAddProduct,
             onOpenSavedLists = onOpenSavedLists,
             onSwitchList = { switchingList = true },
             onEditList = { editingList = state.activeList },
@@ -165,6 +174,8 @@ fun ShoppingListRoute(viewModel: ShoppingListViewModel, contentPadding: PaddingV
             onDeleteList = { confirmingListDelete = state.activeList },
             onMoveItem = viewModel::moveItem,
             onMoveCategory = viewModel::moveCategory,
+            shouldShowReorderHint = shouldShowReorderHint,
+            onReorderHintShown = onReorderHintShown,
         )
         SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).padding(bottom = contentPadding.calculateBottomPadding() + 76.dp)) { data ->
             Snackbar(
@@ -209,6 +220,7 @@ fun ShoppingListScreen(
     onRemove: (ShoppingItem) -> Unit,
     onEdit: (ShoppingItem) -> Unit = {},
     onCreateList: () -> Unit = {},
+    onAddProduct: () -> Unit = {},
     onOpenSavedLists: () -> Unit = {},
     onSwitchList: () -> Unit = {},
     onEditList: () -> Unit = {},
@@ -218,8 +230,20 @@ fun ShoppingListScreen(
     onDeleteList: () -> Unit = {},
     onMoveItem: (ShoppingItem, Int) -> Unit = { _, _ -> },
     onMoveCategory: (ProductCategory, Int) -> Unit = { _, _ -> },
+    shouldShowReorderHint: Boolean = false,
+    onReorderHintShown: () -> Unit = {},
 ) {
     var collapsedCategories by rememberSaveable { mutableStateOf(emptySet<String>()) }
+    var reorderHintVisible by rememberSaveable { mutableStateOf(false) }
+    val productCount = state.groupedItems.values.sumOf { it.size }
+    LaunchedEffect(shouldShowReorderHint, productCount) {
+        if (shouldShowReorderHint && productCount >= 2) {
+            reorderHintVisible = true
+            delay(6_000)
+            reorderHintVisible = false
+            onReorderHintShown()
+        }
+    }
     LazyColumn(
         modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).animateContentSize(),
         contentPadding = PaddingValues(top = contentPadding.calculateTopPadding() + 16.dp, bottom = contentPadding.calculateBottomPadding() + 92.dp),
@@ -238,7 +262,20 @@ fun ShoppingListScreen(
                 Spacer(Modifier.height(24.dp))
                 Text(LocalStrings.current.emptyTitle, style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
                 Text(LocalStrings.current.emptyBody, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.fillMaxWidth().padding(top = 10.dp), style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Center)
+                Button(
+                    onClick = onAddProduct,
+                    shape = RoundedCornerShape(15.dp),
+                    modifier = Modifier.fillMaxWidth().padding(top = 24.dp).height(52.dp).testTag("empty_add_first_product"),
+                ) { Text(LocalStrings.current.addFirstProduct) }
             }
+        }
+        if (state.activeList != null && reorderHintVisible) item {
+            AssistChip(
+                onClick = { reorderHintVisible = false; onReorderHintShown() },
+                label = { Text(LocalStrings.current.reorder) },
+                leadingIcon = { Text("↕") },
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp).testTag("reorder_hint"),
+            )
         }
         if (state.activeList != null) state.groupedItems.forEach { (category, products) ->
             if (products.isNotEmpty()) {

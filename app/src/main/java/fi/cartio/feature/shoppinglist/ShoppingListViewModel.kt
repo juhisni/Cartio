@@ -39,6 +39,7 @@ data class ShoppingListUiState(
     val activeList: ActiveShoppingList? = null,
     val savedLists: List<SavedShoppingList> = emptyList(),
     val canAddQuery: Boolean = false,
+    val hasExactCatalogMatch: Boolean = false,
 )
 
 enum class BulkListAction { MARKED_INCOMPLETE, REMOVED_COMPLETED }
@@ -67,15 +68,17 @@ class ShoppingListViewModel @Inject constructor(private val repository: CartioRe
     val state: StateFlow<ShoppingListUiState> = combine(listContext, query, history, suggestions) { context, text, usage, matches ->
         val existing = context.first.map { it.normalizedName }.toSet()
         fun available(values: List<ProductSuggestion>) = values.filterNot { normalizeProductInput(it.name) in existing }
+        val availableMatches = available(matches)
         ShoppingListUiState(
             groupedItems = context.first.groupBy { it.category },
             query = text,
-            suggestions = available(matches),
+            suggestions = availableMatches,
             recent = available(usage.first),
             frequent = available(usage.second),
             activeList = context.second,
             savedLists = context.third,
             canAddQuery = text.isNotBlank() && normalizeProductInput(text) !in existing,
+            hasExactCatalogMatch = exactCatalogMatch(text, availableMatches) != null,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ShoppingListUiState())
     private val feedbackChannel = Channel<String>(Channel.BUFFERED)
