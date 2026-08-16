@@ -6,6 +6,7 @@ import java.util.Locale
 
 /** Product-first icon selection. Order is intentional: specific foods precede broad families. */
 fun productIcon(name: String, category: ProductCategory): String {
+    if (category == ProductCategory.OTHER) return categoryIcon(ProductCategory.OTHER)
     val value = name.iconKey()
     return when {
         value.has("talouspaperi", "paper towel", "wc paperi", "toilet paper") -> "🧻"

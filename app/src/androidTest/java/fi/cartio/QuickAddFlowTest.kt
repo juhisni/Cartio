@@ -56,6 +56,7 @@ class QuickAddFlowTest {
         rule.waitUntil(5_000) {
             runCatching { rule.onNodeWithTag("product_testituote").fetchSemanticsNode() }.isSuccess
         }
+        rule.onNodeWithTag("category_OTHER").fetchSemanticsNode()
         rule.onNodeWithTag("quick_add_input").fetchSemanticsNode()
     }
 }

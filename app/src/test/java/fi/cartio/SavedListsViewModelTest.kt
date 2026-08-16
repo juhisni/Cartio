@@ -79,7 +79,7 @@ private class SavedListsFakeRepository : CartioRepository {
     override val activeList = MutableStateFlow<ActiveShoppingList?>(null)
     override suspend fun createList(name: String, icon: SavedListIcon) = Unit
     override suspend fun activateList(id: Long) = Unit
-    override suspend fun add(name: String) = error("Not used")
+    override suspend fun add(name: String, categoryOverride: ProductCategory?) = error("Not used")
     override suspend fun toggle(item: ShoppingItem) = Unit
     override suspend fun update(item: ShoppingItem) = Unit
     override suspend fun reorder(items: List<ShoppingItem>) = Unit

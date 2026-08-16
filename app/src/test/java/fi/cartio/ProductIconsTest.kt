@@ -6,6 +6,10 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class ProductIconsTest {
+    @Test fun otherCategoryAlwaysUsesCartIcon() {
+        assertEquals("🛒", productIcon("Mystery milk", ProductCategory.OTHER))
+    }
+
     @Test fun ingredientDoesNotOverrideProductForm() {
         assertEquals("🍿", productIcon("Banaanilastu", ProductCategory.PANTRY))
         assertEquals("🍶", productIcon("Viinietikka", ProductCategory.PANTRY))

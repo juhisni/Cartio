@@ -51,6 +51,17 @@ class ShoppingListViewModelTest {
         assertEquals("Maito", exactCatalogMatch(" maito ", suggestions)?.name)
     }
 
+    @Test fun customProductAlwaysUsesOtherCategory() = runTest(dispatcher) {
+        val repository = FakeRepository(); val viewModel = ShoppingListViewModel(repository)
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.state.collect {} }
+
+        viewModel.setQuery("Mystery milk")
+        viewModel.addCustomProduct(); advanceUntilIdle()
+
+        val item = viewModel.state.value.groupedItems[ProductCategory.OTHER]?.single()
+        assertEquals("Mystery milk", item?.name)
+    }
+
     @Test fun updatingProductMovesItToSelectedCategory() = runTest(dispatcher) {
         val repository = FakeRepository(); val viewModel = ShoppingListViewModel(repository)
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.state.collect {} }
@@ -124,8 +135,8 @@ private class FakeRepository : CartioRepository {
     override val activeList = MutableStateFlow<ActiveShoppingList?>(ActiveShoppingList(1, "Test list", 0, 0))
     override suspend fun createList(name: String, icon: SavedListIcon) = Unit
     override suspend fun activateList(id: Long) = Unit
-    override suspend fun add(name: String): ShoppingItem {
-        val category = if (name.lowercase() == "leipä") ProductCategory.BREAD_GRAINS else ProductCategory.DAIRY
+    override suspend fun add(name: String, categoryOverride: ProductCategory?): ShoppingItem {
+        val category = categoryOverride ?: if (name.lowercase() == "leipä") ProductCategory.BREAD_GRAINS else ProductCategory.DAIRY
         return ShoppingItem((mutableItems.value.size + 1).toLong(), name.replaceFirstChar { it.uppercase() }, normalizeProductInput(name), category = category).also { mutableItems.value += it }
     }
     override suspend fun toggle(item: ShoppingItem) { mutableItems.value = listOf(item.copy(checked = !item.checked)) }

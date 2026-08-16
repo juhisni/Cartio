@@ -33,10 +33,10 @@ class OfflineCartioRepository @Inject constructor(private val dao: CartioDao, pr
     override suspend fun createList(name: String, icon: SavedListIcon) { dao.createAndActivateList(name.trim(), icon) }
     override suspend fun activateList(id: Long) { dao.activateSavedList(id) }
 
-    override suspend fun add(name: String): ShoppingItem {
+    override suspend fun add(name: String, categoryOverride: ProductCategory?): ShoppingItem {
         val trimmed = name.trim().replaceFirstChar { it.uppercase() }
         val normalized = engine.normalize(trimmed)
-        val category = engine.suggest(trimmed)
+        val category = categoryOverride ?: engine.suggest(trimmed)
         val now = System.currentTimeMillis()
         dao.findItem(normalized)?.let { return it.model() }
         val entity = ShoppingItemEntity(name = trimmed, normalizedName = normalized, quantity = null, unit = null, category = category, checked = false, createdAt = now, updatedAt = now, sortOrder = dao.nextSortOrder())

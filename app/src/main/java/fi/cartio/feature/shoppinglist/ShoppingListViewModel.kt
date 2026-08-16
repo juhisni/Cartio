@@ -96,6 +96,16 @@ class ShoppingListViewModel @Inject constructor(private val repository: CartioRe
         val match = exactCatalogMatch(query.value, state.value.suggestions) ?: return
         add(match.name)
     }
+    fun addCustomProduct() {
+        val name = query.value
+        if (name.isBlank()) return
+        viewModelScope.launch {
+            val item = repository.add(name, ProductCategory.OTHER)
+            query.value = ""
+            feedbackChannel.send(item.name)
+            refreshHistory()
+        }
+    }
     fun add(name: String = query.value) {
         if (name.isBlank()) return
         viewModelScope.launch {

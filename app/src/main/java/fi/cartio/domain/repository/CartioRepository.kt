@@ -16,7 +16,7 @@ interface CartioRepository {
     val activeList: Flow<ActiveShoppingList?>
     suspend fun createList(name: String, icon: SavedListIcon)
     suspend fun activateList(id: Long)
-    suspend fun add(name: String): ShoppingItem
+    suspend fun add(name: String, categoryOverride: ProductCategory? = null): ShoppingItem
     suspend fun toggle(item: ShoppingItem)
     suspend fun update(item: ShoppingItem)
     suspend fun reorder(items: List<ShoppingItem>)

@@ -68,7 +68,7 @@ import fi.cartio.feature.shoppinglist.ShoppingListViewModel
                         CustomProductAction(
                             heading = text.productNotFound,
                             action = text.addTypedProduct.format(state.query.trim()),
-                            onAdd = { viewModel.add() },
+                            onAdd = viewModel::addCustomProduct,
                         )
                     }
                 }
