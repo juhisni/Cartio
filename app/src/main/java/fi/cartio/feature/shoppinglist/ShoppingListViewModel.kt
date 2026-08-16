@@ -44,6 +44,14 @@ data class ShoppingListUiState(
 enum class BulkListAction { MARKED_INCOMPLETE, REMOVED_COMPLETED }
 data class BulkListChange(val action: BulkListAction, val previousItems: List<ShoppingItem>)
 
+internal fun exactCatalogMatch(
+    query: String,
+    suggestions: List<ProductSuggestion>,
+): ProductSuggestion? {
+    val normalizedQuery = normalizeProductInput(query)
+    return suggestions.firstOrNull { normalizeProductInput(it.name) == normalizedQuery }
+}
+
 @HiltViewModel
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 class ShoppingListViewModel @Inject constructor(private val repository: CartioRepository) : ViewModel() {
@@ -84,6 +92,10 @@ class ShoppingListViewModel @Inject constructor(private val repository: CartioRe
     fun setLanguage(value: AppLanguage) { language.value = value }
     fun createList(name: String, icon: SavedListIcon = SavedListIcon.CART) { if (name.isNotBlank()) viewModelScope.launch { repository.createList(name, icon) } }
     fun activateList(id: Long) { viewModelScope.launch { repository.activateList(id) } }
+    fun addCatalogMatch() {
+        val match = exactCatalogMatch(query.value, state.value.suggestions) ?: return
+        add(match.name)
+    }
     fun add(name: String = query.value) {
         if (name.isBlank()) return
         viewModelScope.launch {

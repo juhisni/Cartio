@@ -9,6 +9,7 @@ import fi.cartio.core.model.ShoppingItem
 import fi.cartio.core.model.SavedListIcon
 import fi.cartio.domain.repository.CartioRepository
 import fi.cartio.feature.shoppinglist.ShoppingListViewModel
+import fi.cartio.feature.shoppinglist.exactCatalogMatch
 import fi.cartio.domain.suggestion.normalizeProductInput
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -40,6 +41,14 @@ class ShoppingListViewModelTest {
         viewModel.setQuery("maito"); viewModel.add(); advanceUntilIdle()
         assertEquals("", viewModel.state.value.query)
         assertEquals("Maito", viewModel.state.value.groupedItems[ProductCategory.DAIRY]?.single()?.name)
+    }
+
+    @Test fun enterResolvesOnlyAnExactCatalogMatch() {
+        val suggestions = listOf(ProductSuggestion("Maito", ProductCategory.DAIRY))
+
+        assertEquals(null, exactCatalogMatch("testituote", suggestions))
+        assertEquals(null, exactCatalogMatch("mai", suggestions))
+        assertEquals("Maito", exactCatalogMatch(" maito ", suggestions)?.name)
     }
 
     @Test fun updatingProductMovesItToSelectedCategory() = runTest(dispatcher) {

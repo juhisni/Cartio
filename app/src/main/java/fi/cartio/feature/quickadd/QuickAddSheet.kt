@@ -57,7 +57,7 @@ import fi.cartio.feature.shoppinglist.ShoppingListViewModel
     ModalBottomSheet(onDismissRequest = onDismiss, shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp), containerColor = MaterialTheme.colorScheme.surface, dragHandle = { androidx.compose.material3.BottomSheetDefaults.DragHandle(width = 44.dp) }) {
         Column(Modifier.fillMaxWidth().fillMaxHeight(.82f).imePadding().padding(horizontal = 20.dp)) {
             Text(text.addProduct, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 14.dp))
-            OutlinedTextField(value = state.query, onValueChange = viewModel::setQuery, modifier = Modifier.fillMaxWidth().focusRequester(focus).testTag("quick_add_input"), shape = RoundedCornerShape(16.dp), singleLine = true, placeholder = { Text(text.searchHint) }, leadingIcon = { Icon(Icons.Outlined.Search, null) }, keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done), keyboardActions = KeyboardActions(onDone = { viewModel.add() }))
+            OutlinedTextField(value = state.query, onValueChange = viewModel::setQuery, modifier = Modifier.fillMaxWidth().focusRequester(focus).testTag("quick_add_input"), shape = RoundedCornerShape(16.dp), singleLine = true, placeholder = { Text(text.searchHint) }, leadingIcon = { Icon(Icons.Outlined.Search, null) }, keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done), keyboardActions = KeyboardActions(onDone = { viewModel.addCatalogMatch() }))
             Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
                 if (state.query.isBlank()) {
                     SuggestionGroup(text.recent, state.recent, viewModel::add)

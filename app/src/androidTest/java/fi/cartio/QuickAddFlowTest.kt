@@ -48,6 +48,10 @@ class QuickAddFlowTest {
         ensureActiveList("Custom product test")
         rule.onNodeWithTag("open_quick_add").performClick()
         rule.onNodeWithTag("quick_add_input").performTextInput("testituote")
+        rule.onNodeWithTag("quick_add_input").performImeAction()
+        rule.waitForIdle()
+        assertFalse(runCatching { rule.onNodeWithTag("product_testituote").fetchSemanticsNode() }.isSuccess)
+        rule.onNodeWithTag("quick_add_input").fetchSemanticsNode()
         rule.onNodeWithTag("add_typed_product").performClick()
         rule.waitUntil(5_000) {
             runCatching { rule.onNodeWithTag("product_testituote").fetchSemanticsNode() }.isSuccess
