@@ -28,7 +28,7 @@ interface CartioRepository {
     suspend fun save(name: String)
     suspend fun restore(id: Long)
     suspend fun updateList(id: Long, name: String, icon: SavedListIcon)
-    suspend fun duplicateList(id: Long, name: String)
+    suspend fun duplicateList(id: Long, name: String): Long?
     suspend fun deleteSaved(id: Long): SavedListSnapshot?
     suspend fun restoreSaved(snapshot: SavedListSnapshot)
     suspend fun learn(name: String, category: ProductCategory)

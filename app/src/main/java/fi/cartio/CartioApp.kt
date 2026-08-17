@@ -51,6 +51,7 @@ import fi.cartio.core.model.ThemePreference
 import fi.cartio.feature.quickadd.QuickAddSheet
 import fi.cartio.feature.savedlists.SavedListsRoute
 import fi.cartio.feature.settings.SettingsRoute
+import fi.cartio.feature.settings.AboutCartioScreen
 import fi.cartio.feature.settings.SettingsViewModel
 import fi.cartio.feature.shoppinglist.ShoppingListRoute
 import fi.cartio.feature.shoppinglist.ShoppingListViewModel
@@ -58,6 +59,7 @@ import fi.cartio.ui.theme.CartioTheme
 import kotlinx.coroutines.delay
 
 private enum class Destination(val route: String, val icon: ImageVector) { Main("main", Icons.Outlined.Home), Saved("saved", Icons.Outlined.BookmarkBorder), Settings("settings", Icons.Outlined.Settings) }
+private const val AboutRoute = "about"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -106,7 +108,7 @@ fun CartioApp(
                     NavigationBar(containerColor = MaterialTheme.colorScheme.surface, tonalElevation = 0.dp) {
                         Destination.entries.forEach { destination ->
                             val label = when (destination) { Destination.Main -> labels.main; Destination.Saved -> labels.saved; Destination.Settings -> labels.settings }
-                            NavigationBarItem(selected = current == destination.route, onClick = { nav.navigate(destination.route) { popUpTo(nav.graph.findStartDestination().id); launchSingleTop = true } }, icon = { Icon(destination.icon, contentDescription = label) }, label = { Text(label, style = MaterialTheme.typography.labelSmall, maxLines = 1, overflow = TextOverflow.Ellipsis) }, colors = NavigationBarItemDefaults.colors(selectedIconColor = MaterialTheme.colorScheme.primary, selectedTextColor = MaterialTheme.colorScheme.primary, indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = .12f)))
+                            NavigationBarItem(selected = current == destination.route || (destination == Destination.Settings && current == AboutRoute), onClick = { nav.navigate(destination.route) { popUpTo(nav.graph.findStartDestination().id); launchSingleTop = true } }, icon = { Icon(destination.icon, contentDescription = label) }, label = { Text(label, style = MaterialTheme.typography.labelSmall, maxLines = 1, overflow = TextOverflow.Ellipsis) }, colors = NavigationBarItemDefaults.colors(selectedIconColor = MaterialTheme.colorScheme.primary, selectedTextColor = MaterialTheme.colorScheme.primary, indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = .12f)))
                         }
                     }
                 },
@@ -128,7 +130,8 @@ fun CartioApp(
                             )
                         }
                         composable(Destination.Saved.route) { SavedListsRoute(contentPadding = padding, onRestored = { nav.navigate(Destination.Main.route) }) }
-                        composable(Destination.Settings.route) { SettingsRoute(settingsViewModel, padding) }
+                        composable(Destination.Settings.route) { SettingsRoute(settingsViewModel, padding, onOpenAbout = { nav.navigate(AboutRoute) }) }
+                        composable(AboutRoute) { AboutCartioScreen(padding, onBack = { nav.popBackStack() }) }
                     }
                     if (quickAdd) QuickAddSheet(viewModel = shoppingViewModel, onDismiss = { quickAdd = false })
                 }

@@ -24,6 +24,8 @@ import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Policy
 import androidx.compose.material.icons.outlined.Gavel
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -31,6 +33,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -53,15 +56,8 @@ import fi.cartio.R
 import androidx.core.content.pm.PackageInfoCompat
 
 @Composable
-fun SettingsRoute(viewModel: SettingsViewModel, contentPadding: PaddingValues) {
+fun SettingsRoute(viewModel: SettingsViewModel, contentPadding: PaddingValues, onOpenAbout: () -> Unit) {
     val state by viewModel.settings.collectAsStateWithLifecycle(); val strings = LocalStrings.current
-    val context = LocalContext.current
-    val uriHandler = LocalUriHandler.current
-    val version = remember(context) {
-        context.packageManager.getPackageInfo(context.packageName, 0).let { info ->
-            info.versionName.orEmpty() to PackageInfoCompat.getLongVersionCode(info)
-        }
-    }
     LazyColumn(
         Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = contentPadding.calculateTopPadding() + 16.dp, bottom = contentPadding.calculateBottomPadding() + 24.dp),
@@ -81,7 +77,45 @@ fun SettingsRoute(viewModel: SettingsViewModel, contentPadding: PaddingValues) {
             }
         }
         item {
-            SettingsCard(Icons.Outlined.Info, strings.appInfo) {
+            Card(
+                onClick = onOpenAbout,
+                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+            ) {
+                Row(Modifier.fillMaxWidth().heightIn(min = 64.dp).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Outlined.Info, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
+                    Text(strings.appInfo, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f).padding(start = 10.dp))
+                    Icon(Icons.Outlined.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun AboutCartioScreen(contentPadding: PaddingValues, onBack: () -> Unit) {
+    val strings = LocalStrings.current
+    val context = LocalContext.current
+    val uriHandler = LocalUriHandler.current
+    val version = remember(context) {
+        context.packageManager.getPackageInfo(context.packageName, 0).let { info ->
+            info.versionName.orEmpty() to PackageInfoCompat.getLongVersionCode(info)
+        }
+    }
+    LazyColumn(
+        Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
+        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = contentPadding.calculateTopPadding() + 16.dp, bottom = contentPadding.calculateBottomPadding() + 24.dp),
+    ) {
+        item {
+            Row(Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(bottom = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = strings.cancel) }
+                Text(strings.appInfo, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 4.dp))
+            }
+        }
+        item {
+            Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
                 Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                     Image(painterResource(R.drawable.cartio_foreground), contentDescription = null, modifier = Modifier.size(64.dp))
                     Column(Modifier.padding(start = 14.dp)) {

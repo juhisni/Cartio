@@ -77,6 +77,14 @@ fun SavedListsRoute(contentPadding: PaddingValues, onRestored: () -> Unit, viewM
             if (snackbar.showSnackbar("${snapshot.list.name} ${strings.removed}", actionLabel = strings.undo, withDismissAction = true, duration = SnackbarDuration.Short) == SnackbarResult.ActionPerformed) viewModel.undoDelete(snapshot)
         }
     }
+    LaunchedEffect(viewModel, strings.duplicateCreated, strings.openDuplicate) {
+        viewModel.duplications.collect { duplicate ->
+            if (snackbar.showSnackbar(strings.duplicateCreated.format(duplicate.name), actionLabel = strings.openDuplicate, withDismissAction = true, duration = SnackbarDuration.Short) == SnackbarResult.ActionPerformed) {
+                viewModel.restore(duplicate.id)
+                onRestored()
+            }
+        }
+    }
     Box(Modifier.fillMaxSize()) {
         LazyColumn(
             Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
@@ -101,7 +109,10 @@ fun SavedListsRoute(contentPadding: PaddingValues, onRestored: () -> Unit, viewM
         }
         if (state.lists.isEmpty()) item {
             if (state.hasSavedLists) {
-                Text(strings.noMatchingLists, modifier = Modifier.fillMaxWidth().padding(40.dp), color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+                Column(Modifier.fillParentMaxWidth().padding(horizontal = 32.dp, vertical = 40.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(strings.noMatchingLists, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+                    TextButton(onClick = { viewModel.setQuery("") }, modifier = Modifier.padding(top = 8.dp)) { Text(strings.clearSearch) }
+                }
             } else {
                 Column(Modifier.fillParentMaxWidth().padding(horizontal = 32.dp, vertical = 48.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(Icons.Outlined.BookmarkBorder, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(52.dp))
@@ -170,7 +181,7 @@ private fun SavedListCard(list: SavedShoppingList, isActive: Boolean, onOpen: ()
             Box(Modifier.size(48.dp).background(MaterialTheme.colorScheme.primary.copy(alpha = .14f), RoundedCornerShape(14.dp)), contentAlignment = Alignment.Center) { Text(list.icon.symbol, style = MaterialTheme.typography.titleLarge) }
             Column(Modifier.weight(1f).padding(start = 12.dp)) {
                 Text(list.name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                Text(strings.itemCount.format(list.itemCount), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(strings.listProgress.format(list.itemCount, list.completedCount), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             if (isActive) {
                 Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer) { Text(strings.active, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp)) }

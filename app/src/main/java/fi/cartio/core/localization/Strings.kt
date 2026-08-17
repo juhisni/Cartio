@@ -37,14 +37,14 @@ data class CartioStrings(
     val markedIncomplete: String, val completedRemoved: String, val listDeleted: String,
     val shareList: String, val shareListWith: String,
     val duplicateList: String, val duplicateListName: String, val suggestedUnits: String,
-    val addFirstProduct: String,
+    val addFirstProduct: String, val clearSearch: String, val duplicateCreated: String, val openDuplicate: String,
 )
 
 val LocalStrings = staticCompositionLocalOf { strings(AppLanguage.ENGLISH) }
 fun strings(language: AppLanguage) = if (language == AppLanguage.FINNISH) CartioStrings(
     "Ostoslista", "Päänäkymä", "Tallennetut", "Asetukset", "Lisää tuote", "Hae tai kirjoita tuote",
     "Viimeksi lisätyt", "Usein lisätyt", "Lista on vielä tyhjä", "Aloita lisäämällä ensimmäinen tarvitsemasi tuote.",
-    "Tallenna lista", "Listan nimi", "Avaa", "Nimeä uudelleen", "Poista", "Kieli / Language", "Teema", "Tietoja sovelluksesta",
+    "Tallenna lista", "Listan nimi", "Avaa", "Nimeä uudelleen", "Poista", "Kieli / Language", "Teema", "Tietoja Cartiosta",
     "Vaalea", "Tumma", "Järjestelmän mukaan", "Suomi", "English", "Peruuta", "Tallenna", "lisätty",
     "Muokkaa tuotetta", "Tuotteen nimi", "Määrä", "Yksikkö", "Kategoria", "poistettu", "Kumoa", "Laajenna kategoria", "Tiivistä kategoria",
     "Hae listoja", "Hakua vastaavia listoja ei löytynyt", "Tuoteluettelo: Fineli / THL, CC BY 4.0", "Lisää ”%s” listalle", "Etkö löytänyt etsimääsi tuotetta?",
@@ -62,7 +62,7 @@ fun strings(language: AppLanguage) = if (language == AppLanguage.FINNISH) Cartio
     "Kaikki tuotteet merkittiin ostamattomiksi", "Ostetut tuotteet poistettiin", "Lista poistettiin",
     "Jaa lista tekstinä", "Jaa ostoslista sovelluksella",
     "Monista lista", "%s – kopio", "Yksikköehdotukset",
-    "Lisää ensimmäinen tuote"
+    "Lisää ensimmäinen tuote", "Tyhjennä haku", "”%s” luotu", "Avaa"
 ) else CartioStrings(
     "Shopping list", "Main", "Saved", "Settings", "Add product", "Search or type a product",
     "Recently added", "Frequently added", "Your list is empty", "Start by adding the first product you need.",
@@ -84,7 +84,7 @@ fun strings(language: AppLanguage) = if (language == AppLanguage.FINNISH) Cartio
     "All products marked as not completed", "Completed products removed", "List deleted",
     "Share list as text", "Share shopping list with",
     "Duplicate list", "%s – copy", "Suggested units",
-    "Add first product"
+    "Add first product", "Clear search", "“%s” created", "Open"
 )
 
 @Composable fun categoryName(category: ProductCategory): String {

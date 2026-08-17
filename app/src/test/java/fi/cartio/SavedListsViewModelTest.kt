@@ -14,6 +14,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -68,6 +70,17 @@ class SavedListsViewModelTest {
 
         assertEquals(listOf(2L, 1L), viewModel.state.value.lists.map { it.id })
     }
+
+    @Test fun duplicationPublishesCreatedListForFeedbackAndOpening() = runTest(dispatcher) {
+        val viewModel = SavedListsViewModel(SavedListsFakeRepository())
+        val event = async { viewModel.duplications.first() }
+
+        viewModel.duplicate(1, "Viikon ostokset – kopio")
+        advanceUntilIdle()
+
+        assertEquals(3L, event.await().id)
+        assertEquals("Viikon ostokset – kopio", event.await().name)
+    }
 }
 
 private class SavedListsFakeRepository : CartioRepository {
@@ -91,7 +104,7 @@ private class SavedListsFakeRepository : CartioRepository {
     override suspend fun save(name: String) = Unit
     override suspend fun restore(id: Long) = Unit
     override suspend fun updateList(id: Long, name: String, icon: SavedListIcon) = Unit
-    override suspend fun duplicateList(id: Long, name: String) = Unit
+    override suspend fun duplicateList(id: Long, name: String): Long? = 3L
     override suspend fun deleteSaved(id: Long): SavedListSnapshot? = null
     override suspend fun restoreSaved(snapshot: SavedListSnapshot) = Unit
     override suspend fun learn(name: String, category: ProductCategory) = Unit

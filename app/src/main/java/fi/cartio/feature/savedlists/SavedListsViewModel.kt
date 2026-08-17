@@ -31,15 +31,23 @@ class SavedListsViewModel @Inject constructor(private val repository: CartioRepo
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SavedListsUiState())
     private val deletionChannel = Channel<SavedListSnapshot>(Channel.BUFFERED)
     val deletions = deletionChannel.receiveAsFlow()
+    private val duplicationChannel = Channel<DuplicatedList>(Channel.BUFFERED)
+    val duplications = duplicationChannel.receiveAsFlow()
     fun setQuery(value: String) { query.value = value }
     fun save(name: String) { if (name.isNotBlank()) viewModelScope.launch { repository.save(name) } }
     fun create(name: String, icon: SavedListIcon) { if (name.isNotBlank()) viewModelScope.launch { repository.createList(name, icon) } }
     fun restore(id: Long) { viewModelScope.launch { repository.restore(id) } }
     fun update(id: Long, name: String, icon: SavedListIcon) { if (name.isNotBlank()) viewModelScope.launch { repository.updateList(id, name, icon) } }
-    fun duplicate(id: Long, name: String) { if (name.isNotBlank()) viewModelScope.launch { repository.duplicateList(id, name) } }
+    fun duplicate(id: Long, name: String) {
+        if (name.isNotBlank()) viewModelScope.launch {
+            repository.duplicateList(id, name)?.let { duplicationChannel.send(DuplicatedList(it, name.trim())) }
+        }
+    }
     fun delete(id: Long) { viewModelScope.launch { repository.deleteSaved(id)?.let { deletionChannel.send(it) } } }
     fun undoDelete(snapshot: SavedListSnapshot) { viewModelScope.launch { repository.restoreSaved(snapshot) } }
 }
+
+data class DuplicatedList(val id: Long, val name: String)
 
 data class SavedListsUiState(
     val lists: List<SavedShoppingList> = emptyList(),
