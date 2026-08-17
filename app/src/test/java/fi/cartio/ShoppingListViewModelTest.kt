@@ -10,6 +10,7 @@ import fi.cartio.core.model.SavedListIcon
 import fi.cartio.domain.repository.CartioRepository
 import fi.cartio.feature.shoppinglist.ShoppingListViewModel
 import fi.cartio.feature.shoppinglist.exactCatalogMatch
+import fi.cartio.feature.shoppinglist.groupItemsForDisplay
 import fi.cartio.domain.suggestion.normalizeProductInput
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -49,6 +50,20 @@ class ShoppingListViewModelTest {
         assertEquals(null, exactCatalogMatch("testituote", suggestions))
         assertEquals(null, exactCatalogMatch("mai", suggestions))
         assertEquals("Maito", exactCatalogMatch(" maito ", suggestions)?.name)
+    }
+
+    @Test fun completedProductsMoveAfterRemainingProductsWithoutChangingTheirRelativeOrder() {
+        val products = listOf(
+            ShoppingItem(1, "Milk", "milk", category = ProductCategory.DAIRY, checked = true, sortOrder = 0),
+            ShoppingItem(2, "Cheese", "cheese", category = ProductCategory.DAIRY, checked = false, sortOrder = 1),
+            ShoppingItem(3, "Yoghurt", "yoghurt", category = ProductCategory.DAIRY, checked = true, sortOrder = 2),
+            ShoppingItem(4, "Butter", "butter", category = ProductCategory.DAIRY, checked = false, sortOrder = 3),
+        )
+
+        assertEquals(
+            listOf("Cheese", "Butter", "Milk", "Yoghurt"),
+            groupItemsForDisplay(products)[ProductCategory.DAIRY]?.map { it.name },
+        )
     }
 
     @Test fun customProductAlwaysUsesOtherCategory() = runTest(dispatcher) {

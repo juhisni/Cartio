@@ -53,6 +53,11 @@ internal fun exactCatalogMatch(
     return suggestions.firstOrNull { normalizeProductInput(it.name) == normalizedQuery }
 }
 
+internal fun groupItemsForDisplay(items: List<ShoppingItem>): Map<ProductCategory, List<ShoppingItem>> =
+    items.groupBy { it.category }.mapValues { (_, products) ->
+        products.sortedBy { it.checked }
+    }
+
 @HiltViewModel
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 class ShoppingListViewModel @Inject constructor(private val repository: CartioRepository) : ViewModel() {
@@ -70,7 +75,7 @@ class ShoppingListViewModel @Inject constructor(private val repository: CartioRe
         fun available(values: List<ProductSuggestion>) = values.filterNot { normalizeProductInput(it.name) in existing }
         val availableMatches = available(matches)
         ShoppingListUiState(
-            groupedItems = context.first.groupBy { it.category },
+            groupedItems = groupItemsForDisplay(context.first),
             query = text,
             suggestions = availableMatches,
             recent = available(usage.first),

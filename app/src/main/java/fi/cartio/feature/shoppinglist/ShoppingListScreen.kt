@@ -7,6 +7,9 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,6 +18,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.height
@@ -92,6 +96,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -281,7 +290,7 @@ fun ShoppingListScreen(
             if (products.isNotEmpty()) {
                 val collapsed = category.name in collapsedCategories
                 item(key = "header-$category") {
-                    CategoryHeader(category, products.count { !it.checked }, collapsed, onToggle = {
+                    CategoryHeader(category, products.count { !it.checked }, products.size, collapsed, onToggle = {
                         collapsedCategories = if (collapsed) collapsedCategories - category.name else collapsedCategories + category.name
                     }, onMove = { onMoveCategory(category, it) })
                 }
@@ -421,7 +430,7 @@ private fun SwitchListSheet(active: ActiveShoppingList?, lists: List<SavedShoppi
 }
 
 @Composable
-private fun CategoryHeader(category: ProductCategory, count: Int, collapsed: Boolean, onToggle: () -> Unit, onMove: (Int) -> Unit) {
+private fun CategoryHeader(category: ProductCategory, remainingCount: Int, totalCount: Int, collapsed: Boolean, onToggle: () -> Unit, onMove: (Int) -> Unit) {
     val tint = categoryTint(category)
     val strings = LocalStrings.current
     var dragging by remember { mutableStateOf(false) }
@@ -440,7 +449,8 @@ private fun CategoryHeader(category: ProductCategory, count: Int, collapsed: Boo
     ) {
         Text(categoryIcon(category), modifier = Modifier.padding(end = 9.dp, top = 12.dp, bottom = 12.dp))
         Text(categoryName(category), modifier = Modifier.weight(1f), color = tint, style = MaterialTheme.typography.labelLarge)
-        Surface(shape = CircleShape, color = tint.copy(alpha = .14f)) { Text(count.toString(), color = tint, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(horizontal = 9.dp, vertical = 3.dp)) }
+        val progress = if (remainingCount == 0) "✓" else "$remainingCount / $totalCount"
+        Surface(shape = CircleShape, color = tint.copy(alpha = .14f)) { Text(progress, color = tint, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(horizontal = 9.dp, vertical = 3.dp)) }
         Icon(if (collapsed) Icons.Outlined.ExpandMore else Icons.Outlined.ExpandLess, contentDescription = null, tint = tint, modifier = Modifier.padding(start = 4.dp).size(24.dp))
     }
 }
@@ -450,6 +460,8 @@ private fun ProductRow(product: ShoppingItem, onToggle: (ShoppingItem) -> Unit, 
     var menuExpanded by remember { mutableStateOf(false) }
     var dragging by remember { mutableStateOf(false) }
     var dragOffset by remember { mutableStateOf(0f) }
+    val interactionSource = remember { MutableInteractionSource() }
+    val pressed by interactionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(if (dragging) 1.02f else 1f, label = "productDragScale")
     Row(
         Modifier.fillMaxWidth()
@@ -458,9 +470,16 @@ private fun ProductRow(product: ShoppingItem, onToggle: (ShoppingItem) -> Unit, 
             .zIndex(if (dragging) 3f else 0f)
             .graphicsLayer { translationY = dragOffset; scaleX = scale; scaleY = scale }
             .shadow(if (dragging) 12.dp else 0.dp, RoundedCornerShape(16.dp))
-            .background(if (dragging) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(16.dp))
+            .background(
+                when {
+                    dragging -> MaterialTheme.colorScheme.surfaceContainerHigh
+                    pressed -> MaterialTheme.colorScheme.primary.copy(alpha = .08f)
+                    else -> MaterialTheme.colorScheme.surfaceContainerLow
+                },
+                RoundedCornerShape(16.dp),
+            )
             .reorderable(onMove) { active, offset -> dragging = active; dragOffset = offset }
-            .toggleable(value = product.checked, role = Role.Checkbox, onValueChange = { onToggle(product) })
+            .toggleable(value = product.checked, interactionSource = interactionSource, indication = LocalIndication.current, role = Role.Checkbox, onValueChange = { onToggle(product) })
             .alpha(if (product.checked) .58f else 1f)
             .padding(start = 16.dp, end = 4.dp, top = 5.dp, bottom = 5.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -471,7 +490,7 @@ private fun ProductRow(product: ShoppingItem, onToggle: (ShoppingItem) -> Unit, 
             product.quantity?.let { Text(formatQuantity(it, product.unit), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         }
         Box(
-            Modifier.padding(11.dp).size(26.dp).background(if (product.checked) MaterialTheme.colorScheme.primary else Color.Transparent, CircleShape).border(1.5.dp, if (product.checked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, CircleShape),
+            Modifier.padding(10.dp).size(28.dp).background(if (product.checked) MaterialTheme.colorScheme.primary else Color.Transparent, CircleShape).border(2.dp, if (product.checked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, CircleShape),
             contentAlignment = Alignment.Center,
         ) { Text(if (product.checked) "✓" else "", color = Color.White, fontWeight = FontWeight.Bold) }
         Box {
@@ -524,26 +543,58 @@ private fun ProductEditorSheet(item: ShoppingItem, onDismiss: () -> Unit, onSave
     var quantity by remember(item.id) { mutableStateOf(item.quantity?.let { if (it % 1.0 == 0.0) it.toInt().toString() else it.toString() }.orEmpty()) }
     var unit by remember(item.id) { mutableStateOf(item.unit.orEmpty()) }
     var category by remember(item.id) { mutableStateOf(item.category) }
+    val quantityFocus = remember { FocusRequester() }
+    val unitFocus = remember { FocusRequester() }
+    val keyboard = LocalSoftwareKeyboardController.current
     val strings = LocalStrings.current
     ModalBottomSheet(onDismissRequest = onDismiss, shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)) {
-        Column(Modifier.fillMaxWidth().imePadding().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 28.dp)) {
+        Column(Modifier.fillMaxWidth().fillMaxHeight(.88f).imePadding().padding(horizontal = 20.dp)) {
             Text(strings.editProduct, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 16.dp))
-            OutlinedTextField(name, { name = it }, label = { Text(strings.productName) }, singleLine = true, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth())
-            Row(Modifier.fillMaxWidth().padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedTextField(quantity, { value -> quantity = value.filter { it.isDigit() || it == '.' || it == ',' } }, label = { Text(strings.quantity) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), shape = RoundedCornerShape(14.dp), modifier = Modifier.weight(1f))
-                OutlinedTextField(unit, { unit = it }, label = { Text(strings.unit) }, singleLine = true, shape = RoundedCornerShape(14.dp), modifier = Modifier.weight(1f))
-            }
-            Text(strings.suggestedUnits, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp))
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                suggestedUnits(category, finnish = strings.finnish == "Suomi").forEach { suggestion ->
-                    AssistChip(onClick = { unit = suggestion }, label = { Text(suggestion) })
+            Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
+                OutlinedTextField(
+                    name,
+                    { name = it },
+                    label = { Text(strings.productName) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions(onNext = { quantityFocus.requestFocus() }),
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Row(Modifier.fillMaxWidth().padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedTextField(
+                        quantity,
+                        { value -> quantity = value.filter { it.isDigit() || it == '.' || it == ',' } },
+                        label = { Text(strings.quantity) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Next),
+                        keyboardActions = KeyboardActions(onNext = { unitFocus.requestFocus() }),
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.weight(1f).focusRequester(quantityFocus),
+                    )
+                    OutlinedTextField(
+                        unit,
+                        { unit = it },
+                        label = { Text(strings.unit) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(onDone = { keyboard?.hide() }),
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.weight(1f).focusRequester(unitFocus),
+                    )
+                }
+                Text(strings.suggestedUnits, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp))
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    suggestedUnits(category, finnish = strings.finnish == "Suomi").forEach { suggestion ->
+                        AssistChip(onClick = { unit = suggestion }, label = { Text(suggestion) })
+                    }
+                }
+                Text(strings.category, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 18.dp, bottom = 6.dp))
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ProductCategory.entries.forEach { option -> FilterChip(selected = category == option, onClick = { category = option }, label = { Text(categoryName(option)) }) }
                 }
             }
-            Text(strings.category, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 18.dp, bottom = 6.dp))
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ProductCategory.entries.forEach { option -> FilterChip(selected = category == option, onClick = { category = option }, label = { Text(categoryName(option)) }) }
-            }
-            Button(onClick = { onSave(item.copy(name = name.trim(), quantity = quantity.replace(',', '.').toDoubleOrNull(), unit = unit.trim().ifBlank { null }, category = category)) }, enabled = name.isNotBlank(), shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth().padding(top = 20.dp).height(52.dp)) { Text(strings.save) }
+            Button(onClick = { onSave(item.copy(name = name.trim(), quantity = quantity.replace(',', '.').toDoubleOrNull(), unit = unit.trim().ifBlank { null }, category = category)) }, enabled = name.isNotBlank(), shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 16.dp).height(52.dp).testTag("save_product")) { Text(strings.save) }
         }
     }
 }
