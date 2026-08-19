@@ -38,7 +38,32 @@ data class CartioStrings(
     val shareList: String, val shareListWith: String,
     val duplicateList: String, val duplicateListName: String, val suggestedUnits: String,
     val addFirstProduct: String, val clearSearch: String, val duplicateCreated: String, val openDuplicate: String,
-)
+    val back: String, val close: String, val listNameExists: String, val productNameExists: String,
+    val linkUnavailable: String, val categoryRemaining: String, val categoryCompleted: String,
+    val moveToCategory: String, val addQuantity: String,
+) {
+    private val isFinnish get() = main == "Päänäkymä"
+    fun itemCountText(count: Int): String = when {
+        isFinnish && count == 1 -> "1 tuote"
+        isFinnish -> "$count tuotetta"
+        count == 1 -> "1 item"
+        else -> "$count items"
+    }
+    fun listProgressText(total: Int, completed: Int): String =
+        "${itemCountText(total)} · $completed ${if (isFinnish) "valmiina" else "completed"}"
+    fun categoryProgressDescription(remaining: Int, total: Int): String = when {
+        remaining == 0 && isFinnish && total == 1 -> "Kaikki 1 tuote valmiina"
+        remaining == 0 && isFinnish -> "Kaikki $total tuotetta valmiina"
+        remaining == 0 && total == 1 -> "All 1 item completed"
+        remaining == 0 -> "All $total items completed"
+        isFinnish && remaining == 1 && total == 1 -> "1 tuote jäljellä 1 tuotteesta"
+        isFinnish && remaining == 1 -> "1 tuote jäljellä $total tuotteesta"
+        isFinnish -> "$remaining tuotetta jäljellä $total tuotteesta"
+        remaining == 1 && total == 1 -> "1 item remaining out of 1"
+        remaining == 1 -> "1 item remaining out of $total"
+        else -> "$remaining items remaining out of $total"
+    }
+}
 
 val LocalStrings = staticCompositionLocalOf { strings(AppLanguage.ENGLISH) }
 fun strings(language: AppLanguage) = if (language == AppLanguage.FINNISH) CartioStrings(
@@ -62,7 +87,10 @@ fun strings(language: AppLanguage) = if (language == AppLanguage.FINNISH) Cartio
     "Kaikki tuotteet merkittiin ostamattomiksi", "Ostetut tuotteet poistettiin", "Lista poistettiin",
     "Jaa lista tekstinä", "Jaa ostoslista sovelluksella",
     "Monista lista", "%s – kopio", "Yksikköehdotukset",
-    "Lisää ensimmäinen tuote", "Tyhjennä haku", "”%s” luotu", "Avaa"
+    "Lisää ensimmäinen tuote", "Tyhjennä haku", "”%s” luotu", "Avaa",
+    "Takaisin", "Sulje", "Samanniminen lista on jo olemassa", "Samanniminen tuote on jo listalla",
+    "Linkkiä ei voitu avata", "%d tuotetta jäljellä %d tuotteesta", "Kaikki %d tuotetta valmiina",
+    "Siirrä kategoriaan", "Lisää määrä"
 ) else CartioStrings(
     "Shopping list", "Main", "Saved", "Settings", "Add product", "Search or type a product",
     "Recently added", "Frequently added", "Your list is empty", "Start by adding the first product you need.",
@@ -84,7 +112,10 @@ fun strings(language: AppLanguage) = if (language == AppLanguage.FINNISH) Cartio
     "All products marked as not completed", "Completed products removed", "List deleted",
     "Share list as text", "Share shopping list with",
     "Duplicate list", "%s – copy", "Suggested units",
-    "Add first product", "Clear search", "“%s” created", "Open"
+    "Add first product", "Clear search", "“%s” created", "Open",
+    "Back", "Close", "A list with this name already exists", "A product with this name is already on the list",
+    "The link could not be opened", "%d products remaining out of %d", "All %d products completed",
+    "Move to category", "Add quantity"
 )
 
 @Composable fun categoryName(category: ProductCategory): String {

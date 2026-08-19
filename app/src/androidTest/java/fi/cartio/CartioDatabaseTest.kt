@@ -107,6 +107,27 @@ class CartioDatabaseTest {
         assertEquals(1, repository.items.first().size)
     }
 
+    @Test fun duplicateListNamesAreRejectedIgnoringCaseAndWhitespace() = runTest {
+        val dao = db.dao()
+        val weeklyId = dao.createAndActivateList("Weekly groceries")
+
+        assertEquals(0L, dao.createAndActivateList("  WEEKLY   groceries "))
+        assertEquals(null, dao.duplicateSavedList(weeklyId, "weekly groceries"))
+        val secondId = dao.createAndActivateList("Party")
+        assertEquals(false, dao.updateList(secondId, " weekly groceries ", SavedListIcon.PARTY))
+        assertEquals(setOf("Weekly groceries", "Party"), dao.observeSavedLists().first().map { it.name }.toSet())
+    }
+
+    @Test fun renamingProductToExistingProductIsRejected() = runTest {
+        val repository = OfflineCartioRepository(db.dao(), OfflineCategorySuggestionEngine(db.dao(), BundledProductCatalog(context)))
+        repository.createList("Weekly", SavedListIcon.CART)
+        repository.add("Milk")
+        val bread = repository.add("Bread")
+
+        assertEquals(false, repository.update(bread.copy(name = " milk ")))
+        assertEquals(listOf("Milk", "Bread"), repository.items.first().map { it.name })
+    }
+
     @Test fun bulkCompletionActionsSyncAndRestoreTheActiveList() = runTest {
         val dao = db.dao()
         val listId = dao.createAndActivateList("Weekly")
@@ -128,7 +149,7 @@ class CartioDatabaseTest {
         assertEquals(listOf("Milk", "Bread"), dao.observeItems().first().map { it.name })
     }
 
-    @Test fun duplicateListCopiesMetadataAndEveryProductWithoutActivatingIt() = runTest {
+    @Test fun duplicateListCopiesMetadataAndProductsAsIncompleteWithoutActivatingIt() = runTest {
         val dao = db.dao()
         val sourceId = dao.createAndActivateList("Weekly", SavedListIcon.HOME)
         val now = System.currentTimeMillis()
@@ -144,7 +165,8 @@ class CartioDatabaseTest {
         assertEquals("Milk", duplicateItem.name)
         assertEquals(2.0, duplicateItem.quantity)
         assertEquals("l", duplicateItem.unit)
-        assertEquals(true, duplicateItem.checked)
+        assertEquals(false, duplicateItem.checked)
+        assertEquals(0, dao.observeSavedLists().first().single { it.id == duplicateId }.completedCount)
         assertEquals(sourceId, dao.observeActiveList().first()?.savedListId)
     }
 }

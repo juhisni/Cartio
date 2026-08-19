@@ -26,6 +26,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
@@ -100,7 +101,7 @@ fun CartioApp(
             val nav = rememberNavController()
             val backStack by nav.currentBackStackEntryAsState()
             val current = backStack?.destination?.route ?: Destination.Main.route
-            var quickAdd by remember { mutableStateOf(false) }
+            var quickAdd by rememberSaveable { mutableStateOf(false) }
             val labels = LocalStrings.current
             Scaffold(
                 modifier = Modifier.fillMaxSize(),

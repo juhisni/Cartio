@@ -1,6 +1,7 @@
 package fi.cartio.feature.shoppinglist
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import fi.cartio.core.model.ProductCategory
@@ -40,10 +41,12 @@ data class ShoppingListUiState(
     val savedLists: List<SavedShoppingList> = emptyList(),
     val canAddQuery: Boolean = false,
     val hasExactCatalogMatch: Boolean = false,
+    val isBusy: Boolean = false,
 )
 
 enum class BulkListAction { MARKED_INCOMPLETE, REMOVED_COMPLETED }
 data class BulkListChange(val action: BulkListAction, val previousItems: List<ShoppingItem>)
+enum class EditResult { SUCCESS, DUPLICATE_NAME }
 
 internal fun exactCatalogMatch(
     query: String,
@@ -60,17 +63,18 @@ internal fun groupItemsForDisplay(items: List<ShoppingItem>): Map<ProductCategor
 
 @HiltViewModel
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
-class ShoppingListViewModel @Inject constructor(private val repository: CartioRepository) : ViewModel() {
-    private val query = MutableStateFlow("")
+class ShoppingListViewModel @Inject constructor(private val repository: CartioRepository, private val savedStateHandle: SavedStateHandle = SavedStateHandle()) : ViewModel() {
+    private val query = savedStateHandle.getStateFlow("product_query", "")
     private val language = MutableStateFlow(AppLanguage.ENGLISH)
     private val history = MutableStateFlow(Pair(emptyList<ProductSuggestion>(), emptyList<ProductSuggestion>()))
+    private val busy = MutableStateFlow(false)
     private val suggestions = combine(query.debounce(100).distinctUntilChanged(), language) { text, selectedLanguage ->
         text to selectedLanguage
     }.mapLatest { (text, selectedLanguage) ->
         repository.dictionarySuggestions(text, selectedLanguage)
     }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
     private val listContext = combine(repository.items, repository.activeList, repository.savedLists) { items, active, saved -> Triple(items, active, saved) }
-    val state: StateFlow<ShoppingListUiState> = combine(listContext, query, history, suggestions) { context, text, usage, matches ->
+    val state: StateFlow<ShoppingListUiState> = combine(listContext, query, history, suggestions, busy) { context, text, usage, matches, working ->
         val existing = context.first.map { it.normalizedName }.toSet()
         fun available(values: List<ProductSuggestion>) = values.filterNot { normalizeProductInput(it.name) in existing }
         val availableMatches = available(matches)
@@ -84,21 +88,32 @@ class ShoppingListViewModel @Inject constructor(private val repository: CartioRe
             savedLists = context.third,
             canAddQuery = text.isNotBlank() && normalizeProductInput(text) !in existing,
             hasExactCatalogMatch = exactCatalogMatch(text, availableMatches) != null,
+            isBusy = working,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ShoppingListUiState())
-    private val feedbackChannel = Channel<String>(Channel.BUFFERED)
+    private val feedbackChannel = Channel<ShoppingItem>(Channel.BUFFERED)
     val feedback = feedbackChannel.receiveAsFlow()
+    private val editRequestChannel = Channel<ShoppingItem>(Channel.BUFFERED)
+    val editRequests = editRequestChannel.receiveAsFlow()
     private val removalChannel = Channel<ShoppingItem>(Channel.BUFFERED)
     val removals = removalChannel.receiveAsFlow()
     private val bulkChangeChannel = Channel<BulkListChange>(Channel.BUFFERED)
     val bulkChanges = bulkChangeChannel.receiveAsFlow()
     private val deletedListChannel = Channel<SavedListSnapshot>(Channel.BUFFERED)
     val deletedLists = deletedListChannel.receiveAsFlow()
+    private val productEditChannel = Channel<EditResult>(Channel.BUFFERED)
+    val productEdits = productEditChannel.receiveAsFlow()
+    private val listEditChannel = Channel<EditResult>(Channel.BUFFERED)
+    val listEdits = listEditChannel.receiveAsFlow()
+    private val listCreationChannel = Channel<EditResult>(Channel.BUFFERED)
+    val listCreations = listCreationChannel.receiveAsFlow()
 
     init { refreshHistory() }
-    fun setQuery(value: String) { query.value = value }
+    fun setQuery(value: String) { savedStateHandle["product_query"] = value }
     fun setLanguage(value: AppLanguage) { language.value = value }
-    fun createList(name: String, icon: SavedListIcon = SavedListIcon.CART) { if (name.isNotBlank()) viewModelScope.launch { repository.createList(name, icon) } }
+    fun createList(name: String, icon: SavedListIcon = SavedListIcon.CART) { if (name.isNotBlank()) launchOperation {
+        listCreationChannel.send(if (repository.createList(name, icon) != null) EditResult.SUCCESS else EditResult.DUPLICATE_NAME)
+    } }
     fun activateList(id: Long) { viewModelScope.launch { repository.activateList(id) } }
     fun addCatalogMatch() {
         val match = exactCatalogMatch(query.value, state.value.suggestions) ?: return
@@ -109,8 +124,8 @@ class ShoppingListViewModel @Inject constructor(private val repository: CartioRe
         if (name.isBlank()) return
         viewModelScope.launch {
             val item = repository.add(name, ProductCategory.OTHER)
-            query.value = ""
-            feedbackChannel.send(item.name)
+            setQuery("")
+            feedbackChannel.send(item)
             refreshHistory()
         }
     }
@@ -118,13 +133,16 @@ class ShoppingListViewModel @Inject constructor(private val repository: CartioRe
         if (name.isBlank()) return
         viewModelScope.launch {
             val item = repository.add(name)
-            query.value = ""
-            feedbackChannel.send(item.name)
+            setQuery("")
+            feedbackChannel.send(item)
             refreshHistory()
         }
     }
     fun toggle(item: ShoppingItem) { viewModelScope.launch { repository.toggle(item) } }
-    fun update(item: ShoppingItem) { viewModelScope.launch { repository.update(item) } }
+    fun update(item: ShoppingItem) { launchOperation {
+        productEditChannel.send(if (repository.update(item)) EditResult.SUCCESS else EditResult.DUPLICATE_NAME)
+    } }
+    fun requestEdit(item: ShoppingItem) { viewModelScope.launch { editRequestChannel.send(item) } }
     fun moveItem(item: ShoppingItem, direction: Int) {
         val ordered = state.value.groupedItems.values.flatten().toMutableList()
         val from = ordered.indexOfFirst { it.id == item.id }
@@ -151,7 +169,9 @@ class ShoppingListViewModel @Inject constructor(private val repository: CartioRe
     fun undoBulkChange(change: BulkListChange) { viewModelScope.launch { repository.restoreCurrent(change.previousItems) } }
     fun updateActiveList(name: String, icon: SavedListIcon) {
         val id = state.value.activeList?.savedListId ?: return
-        if (name.isNotBlank()) viewModelScope.launch { repository.updateList(id, name, icon) }
+        if (name.isNotBlank()) launchOperation {
+            listEditChannel.send(if (repository.updateList(id, name, icon)) EditResult.SUCCESS else EditResult.DUPLICATE_NAME)
+        }
     }
     fun deleteActiveList() {
         val id = state.value.activeList?.savedListId ?: return
@@ -161,4 +181,9 @@ class ShoppingListViewModel @Inject constructor(private val repository: CartioRe
     fun remove(item: ShoppingItem) { viewModelScope.launch { repository.remove(item.id); removalChannel.send(item) } }
     fun undoRemove(item: ShoppingItem) { viewModelScope.launch { repository.restoreItem(item) } }
     private fun refreshHistory() { viewModelScope.launch { history.value = repository.recent() to repository.frequent() } }
+    private fun launchOperation(block: suspend () -> Unit) {
+        if (busy.value) return
+        busy.value = true
+        viewModelScope.launch { try { block() } finally { busy.value = false } }
+    }
 }

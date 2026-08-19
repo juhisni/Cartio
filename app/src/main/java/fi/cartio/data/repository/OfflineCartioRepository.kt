@@ -30,8 +30,8 @@ class OfflineCartioRepository @Inject constructor(private val dao: CartioDao, pr
         active?.let { ActiveShoppingList(it.savedListId, it.name, currentItems.size, currentItems.count(ShoppingItem::checked), it.icon) }
     }
 
-    override suspend fun createList(name: String, icon: SavedListIcon) { dao.createAndActivateList(name.trim(), icon) }
-    override suspend fun activateList(id: Long) { dao.activateSavedList(id) }
+    override suspend fun createList(name: String, icon: SavedListIcon): Long? = dao.createAndActivateList(name.trim(), icon).takeIf { it > 0 }
+    override suspend fun activateList(id: Long): Boolean = dao.activateSavedList(id)
 
     override suspend fun add(name: String, categoryOverride: ProductCategory?): ShoppingItem {
         val trimmed = name.trim().replaceFirstChar { it.uppercase() }
@@ -47,12 +47,13 @@ class OfflineCartioRepository @Inject constructor(private val dao: CartioDao, pr
         return entity.copy(id = id).model()
     }
     override suspend fun toggle(item: ShoppingItem) { dao.updateItem(item.copy(checked = !item.checked, updatedAt = System.currentTimeMillis()).entity()); dao.syncCurrentToActiveList() }
-    override suspend fun update(item: ShoppingItem) {
+    override suspend fun update(item: ShoppingItem): Boolean {
         val normalized = engine.normalize(item.name)
-        if (dao.findItem(normalized)?.id?.let { it != item.id } == true) return
+        if (dao.findItem(normalized)?.id?.let { it != item.id } == true) return false
         dao.updateItem(item.copy(normalizedName = normalized, updatedAt = System.currentTimeMillis()).entity())
         dao.learn(LearnedProductCategoryEntity(normalized, item.category))
         dao.syncCurrentToActiveList()
+        return true
     }
     override suspend fun reorder(items: List<ShoppingItem>) = dao.reorderCurrent(items.mapIndexed { index, item -> item.copy(sortOrder = index).entity() })
     override suspend fun markAllIncomplete() = dao.markAllIncomplete()?.map { it.model() }
@@ -65,8 +66,8 @@ class OfflineCartioRepository @Inject constructor(private val dao: CartioDao, pr
         dao.syncCurrentToActiveList()
     }
     override suspend fun save(name: String) { dao.saveCurrent(name.trim()) }
-    override suspend fun restore(id: Long) = dao.activateSavedList(id)
-    override suspend fun updateList(id: Long, name: String, icon: SavedListIcon) = dao.updateList(id, name.trim(), icon)
+    override suspend fun restore(id: Long): Boolean = dao.activateSavedList(id)
+    override suspend fun updateList(id: Long, name: String, icon: SavedListIcon): Boolean = dao.updateList(id, name.trim(), icon)
     override suspend fun duplicateList(id: Long, name: String): Long? = dao.duplicateSavedList(id, name.trim())
     override suspend fun deleteSaved(id: Long): SavedListSnapshot? {
         val deleted = dao.deleteSavedSnapshot(id) ?: return null

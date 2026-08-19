@@ -2,6 +2,7 @@ package fi.cartio.feature.quickadd
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -14,24 +15,29 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -53,10 +59,26 @@ import fi.cartio.feature.shoppinglist.ShoppingListViewModel
     val focus = remember { FocusRequester() }; val keyboard = LocalSoftwareKeyboardController.current
     val snackbar = remember { SnackbarHostState() }; val text = LocalStrings.current
     LaunchedEffect(Unit) { focus.requestFocus(); keyboard?.show() }
-    LaunchedEffect(viewModel) { viewModel.feedback.collect { snackbar.showSnackbar("$it ${text.added}"); focus.requestFocus(); keyboard?.show() } }
-    ModalBottomSheet(onDismissRequest = onDismiss, shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp), containerColor = MaterialTheme.colorScheme.surface, dragHandle = { androidx.compose.material3.BottomSheetDefaults.DragHandle(width = 44.dp) }) {
+    LaunchedEffect(viewModel, text.added, text.addQuantity) {
+        viewModel.feedback.collect { item ->
+            val result = snackbar.showSnackbar("${item.name} ${text.added}", actionLabel = text.addQuantity, duration = SnackbarDuration.Short)
+            if (result == SnackbarResult.ActionPerformed) {
+                viewModel.setQuery("")
+                viewModel.requestEdit(item)
+                onDismiss()
+            } else {
+                focus.requestFocus()
+                keyboard?.show()
+            }
+        }
+    }
+    val dismiss = { viewModel.setQuery(""); onDismiss() }
+    ModalBottomSheet(onDismissRequest = dismiss, shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp), containerColor = MaterialTheme.colorScheme.surface, dragHandle = { androidx.compose.material3.BottomSheetDefaults.DragHandle(width = 44.dp) }) {
         Column(Modifier.fillMaxWidth().fillMaxHeight(.82f).imePadding().padding(horizontal = 20.dp)) {
-            Text(text.addProduct, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 14.dp))
+            Row(Modifier.fillMaxWidth().padding(bottom = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(text.addProduct, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+                IconButton(onClick = dismiss) { Icon(Icons.Outlined.Close, contentDescription = text.close) }
+            }
             OutlinedTextField(value = state.query, onValueChange = viewModel::setQuery, modifier = Modifier.fillMaxWidth().focusRequester(focus).testTag("quick_add_input"), shape = RoundedCornerShape(16.dp), singleLine = true, placeholder = { Text(text.searchHint) }, leadingIcon = { Icon(Icons.Outlined.Search, null) }, keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done), keyboardActions = KeyboardActions(onDone = { viewModel.addCatalogMatch() }))
             if (state.query.isBlank()) {
                 Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {

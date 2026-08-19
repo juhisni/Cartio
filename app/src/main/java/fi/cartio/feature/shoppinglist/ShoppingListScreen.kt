@@ -41,6 +41,7 @@ import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material.icons.outlined.DeleteSweep
+import androidx.compose.material.icons.automirrored.outlined.DriveFileMove
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.DropdownMenu
@@ -64,6 +65,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.foundation.Image
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -90,6 +92,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextAlign
@@ -139,11 +142,17 @@ fun ShoppingListRoute(
     onReorderHintShown: () -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    var editing by remember { mutableStateOf<ShoppingItem?>(null) }
-    var creatingList by remember { mutableStateOf(false) }
-    var switchingList by remember { mutableStateOf(false) }
-    var editingList by remember { mutableStateOf<ActiveShoppingList?>(null) }
-    var confirmingListDelete by remember { mutableStateOf<ActiveShoppingList?>(null) }
+    var editingId by rememberSaveable { mutableStateOf<Long?>(null) }
+    val editing = editingId?.let { id -> state.groupedItems.values.flatten().firstOrNull { it.id == id } }
+    var productEditError by rememberSaveable { mutableStateOf(false) }
+    var creatingList by rememberSaveable { mutableStateOf(false) }
+    var createListError by rememberSaveable { mutableStateOf(false) }
+    var switchingList by rememberSaveable { mutableStateOf(false) }
+    var editingListOpen by rememberSaveable { mutableStateOf(false) }
+    val editingList = state.activeList.takeIf { editingListOpen }
+    var editListError by rememberSaveable { mutableStateOf(false) }
+    var confirmingListDeleteOpen by rememberSaveable { mutableStateOf(false) }
+    val confirmingListDelete = state.activeList.takeIf { confirmingListDeleteOpen }
     val snackbar = remember { SnackbarHostState() }
     val strings = LocalStrings.current
     val context = LocalContext.current
@@ -164,15 +173,33 @@ fun ShoppingListRoute(
             if (snackbar.showSnackbar(strings.listDeleted, actionLabel = strings.undo, withDismissAction = true, duration = SnackbarDuration.Short) == SnackbarResult.ActionPerformed) viewModel.undoDeleteActiveList(snapshot)
         }
     }
+    LaunchedEffect(viewModel, strings.productNameExists) {
+        viewModel.productEdits.collect { result ->
+            if (result == EditResult.SUCCESS) editingId = null else productEditError = true
+        }
+    }
+    LaunchedEffect(viewModel) {
+        viewModel.editRequests.collect { item -> productEditError = false; editingId = item.id }
+    }
+    LaunchedEffect(viewModel, strings.listNameExists) {
+        viewModel.listEdits.collect { result ->
+            if (result == EditResult.SUCCESS) editingListOpen = false else editListError = true
+        }
+    }
+    LaunchedEffect(viewModel, strings.listNameExists) {
+        viewModel.listCreations.collect { result ->
+            if (result == EditResult.SUCCESS) creatingList = false else createListError = true
+        }
+    }
     Box(Modifier.fillMaxSize()) {
         ShoppingListScreen(
             state, contentPadding, viewModel::toggle, viewModel::remove,
-            onEdit = { editing = it },
-            onCreateList = { creatingList = true },
+            onEdit = { productEditError = false; editingId = it.id },
+            onCreateList = { createListError = false; creatingList = true },
             onAddProduct = onAddProduct,
             onOpenSavedLists = onOpenSavedLists,
             onSwitchList = { switchingList = true },
-            onEditList = { editingList = state.activeList },
+            onEditList = { editListError = false; editingListOpen = true },
             onShareList = {
                 state.activeList?.let { active ->
                     shareListText(context, strings.shareListWith, formatShoppingListForSharing(active.name, state.groupedItems, categoryNames))
@@ -180,8 +207,9 @@ fun ShoppingListRoute(
             },
             onMarkAllIncomplete = viewModel::markAllIncomplete,
             onRemoveCompleted = viewModel::removeCompleted,
-            onDeleteList = { confirmingListDelete = state.activeList },
+            onDeleteList = { confirmingListDeleteOpen = true },
             onMoveItem = viewModel::moveItem,
+            onChangeCategory = { item, category -> viewModel.update(item.copy(category = category)) },
             onMoveCategory = viewModel::moveCategory,
             shouldShowReorderHint = shouldShowReorderHint,
             onReorderHintShown = onReorderHintShown,
@@ -196,27 +224,27 @@ fun ShoppingListRoute(
             )
         }
     }
-    editing?.let { item -> ProductEditorSheet(item, onDismiss = { editing = null }, onSave = { viewModel.update(it); editing = null }) }
-    if (creatingList) CreateListSheet(onDismiss = { creatingList = false }, onCreate = { name, icon -> viewModel.createList(name, icon); creatingList = false })
+    editing?.let { item -> ProductEditorSheet(item, if (productEditError) strings.productNameExists else null, state.isBusy, onDismiss = { editingId = null }, onSave = { productEditError = false; viewModel.update(it) }) }
+    if (creatingList) CreateListSheet(if (createListError) strings.listNameExists else null, state.isBusy, onDismiss = { creatingList = false }, onCreate = { name, icon -> createListError = false; viewModel.createList(name, icon) })
     if (switchingList) SwitchListSheet(
         active = state.activeList,
         lists = state.savedLists,
         onDismiss = { switchingList = false },
         onActivate = { viewModel.activateList(it); switchingList = false },
-        onCreate = { switchingList = false; creatingList = true },
+        onCreate = { switchingList = false; createListError = false; creatingList = true },
         onManage = { switchingList = false; onOpenSavedLists() },
     )
-    editingList?.let { active -> EditListSheet(active, onDismiss = { editingList = null }, onSave = { name, icon -> viewModel.updateActiveList(name, icon); editingList = null }) }
+    editingList?.let { active -> EditListSheet(active, if (editListError) strings.listNameExists else null, state.isBusy, onDismiss = { editingListOpen = false }, onSave = { name, icon -> editListError = false; viewModel.updateActiveList(name, icon) }) }
     confirmingListDelete?.let { active ->
         AlertDialog(
-            onDismissRequest = { confirmingListDelete = null },
+            onDismissRequest = { confirmingListDeleteOpen = false },
             containerColor = MaterialTheme.colorScheme.surface,
             titleContentColor = MaterialTheme.colorScheme.onSurface,
             textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
             title = { Text(strings.deleteList) },
             text = { Text(strings.deleteListConfirmation.format(active.name)) },
-            confirmButton = { TextButton(onClick = { confirmingListDelete = null; viewModel.deleteActiveList() }) { Text(strings.delete) } },
-            dismissButton = { TextButton(onClick = { confirmingListDelete = null }) { Text(strings.cancel) } },
+            confirmButton = { TextButton(onClick = { confirmingListDeleteOpen = false; viewModel.deleteActiveList() }) { Text(strings.delete) } },
+            dismissButton = { TextButton(onClick = { confirmingListDeleteOpen = false }) { Text(strings.cancel) } },
         )
     }
 }
@@ -238,6 +266,7 @@ fun ShoppingListScreen(
     onRemoveCompleted: () -> Unit = {},
     onDeleteList: () -> Unit = {},
     onMoveItem: (ShoppingItem, Int) -> Unit = { _, _ -> },
+    onChangeCategory: (ShoppingItem, ProductCategory) -> Unit = { _, _ -> },
     onMoveCategory: (ProductCategory, Int) -> Unit = { _, _ -> },
     shouldShowReorderHint: Boolean = false,
     onReorderHintShown: () -> Unit = {},
@@ -294,7 +323,7 @@ fun ShoppingListScreen(
                         collapsedCategories = if (collapsed) collapsedCategories - category.name else collapsedCategories + category.name
                     }, onMove = { onMoveCategory(category, it) })
                 }
-                if (!collapsed) items(products, key = { it.id }) { product -> ProductRow(product, onToggle, onRemove, onEdit) { direction -> onMoveItem(product, direction) } }
+                if (!collapsed) items(products, key = { it.id }) { product -> ProductRow(product, onToggle, onRemove, onEdit, { category -> onChangeCategory(product, category) }) { direction -> onMoveItem(product, direction) } }
             }
         }
     }
@@ -331,7 +360,7 @@ private fun ActiveListCard(active: ActiveShoppingList, onSwitch: () -> Unit, onE
                 Column(Modifier.weight(1f)) {
                     Text(strings.currentList, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
                     Text(active.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(strings.listProgress.format(active.itemCount, active.completedCount), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(strings.listProgressText(active.itemCount, active.completedCount), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Icon(Icons.Outlined.KeyboardArrowDown, strings.switchList)
             }
@@ -359,18 +388,18 @@ private fun shareListText(context: Context, chooserTitle: String, text: String) 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun EditListSheet(active: ActiveShoppingList, onDismiss: () -> Unit, onSave: (String, SavedListIcon) -> Unit) {
-    var name by remember(active.savedListId) { mutableStateOf(active.name) }
-    var icon by remember(active.savedListId) { mutableStateOf(active.icon) }
+private fun EditListSheet(active: ActiveShoppingList, errorMessage: String?, isBusy: Boolean, onDismiss: () -> Unit, onSave: (String, SavedListIcon) -> Unit) {
+    var name by rememberSaveable(active.savedListId) { mutableStateOf(active.name) }
+    var icon by rememberSaveable(active.savedListId) { mutableStateOf(active.icon) }
     val strings = LocalStrings.current
     ModalBottomSheet(onDismissRequest = onDismiss, shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)) {
         Column(Modifier.fillMaxWidth().imePadding().padding(horizontal = 20.dp, vertical = 8.dp).padding(bottom = 24.dp)) {
             Text(strings.editList, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 16.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
                 SavedListIconPicker(icon, strings.listIcon) { icon = it }
-                OutlinedTextField(name, { name = it }, label = { Text(strings.listName) }, singleLine = true, shape = RoundedCornerShape(16.dp), modifier = Modifier.weight(1f))
+                OutlinedTextField(name, { name = it }, label = { Text(strings.listName) }, singleLine = true, isError = errorMessage != null, supportingText = errorMessage?.let { message -> { Text(message) } }, keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done), keyboardActions = KeyboardActions(onDone = { if (name.isNotBlank() && !isBusy) onSave(name.trim(), icon) }), shape = RoundedCornerShape(16.dp), modifier = Modifier.weight(1f))
             }
-            Button(onClick = { onSave(name.trim(), icon) }, enabled = name.isNotBlank(), shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth().padding(top = 12.dp).height(54.dp)) { Text(strings.save) }
+            Button(onClick = { onSave(name.trim(), icon) }, enabled = name.isNotBlank() && !isBusy, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth().padding(top = 12.dp).height(54.dp)) { if (isBusy) CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.dp) else Text(strings.save) }
             TextButton(onClick = onDismiss, modifier = Modifier.align(Alignment.CenterHorizontally)) { Text(strings.cancel) }
         }
     }
@@ -378,18 +407,18 @@ private fun EditListSheet(active: ActiveShoppingList, onDismiss: () -> Unit, onS
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun CreateListSheet(onDismiss: () -> Unit, onCreate: (String, SavedListIcon) -> Unit) {
-    var name by remember { mutableStateOf("") }
-    var icon by remember { mutableStateOf(SavedListIcon.CART) }
+private fun CreateListSheet(errorMessage: String?, isBusy: Boolean, onDismiss: () -> Unit, onCreate: (String, SavedListIcon) -> Unit) {
+    var name by rememberSaveable { mutableStateOf("") }
+    var icon by rememberSaveable { mutableStateOf(SavedListIcon.CART) }
     val strings = LocalStrings.current
     ModalBottomSheet(onDismissRequest = onDismiss, shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)) {
         Column(Modifier.fillMaxWidth().imePadding().padding(horizontal = 20.dp, vertical = 8.dp).padding(bottom = 24.dp)) {
             Text(strings.createNewList, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 16.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
                 SavedListIconPicker(icon, strings.listIcon) { icon = it }
-                OutlinedTextField(name, { name = it }, label = { Text(strings.listName) }, singleLine = true, shape = RoundedCornerShape(16.dp), modifier = Modifier.weight(1f).testTag("new_list_name"))
+                OutlinedTextField(name, { name = it }, label = { Text(strings.listName) }, singleLine = true, isError = errorMessage != null, supportingText = errorMessage?.let { message -> { Text(message) } }, keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done), keyboardActions = KeyboardActions(onDone = { if (name.isNotBlank() && !isBusy) onCreate(name.trim(), icon) }), shape = RoundedCornerShape(16.dp), modifier = Modifier.weight(1f).testTag("new_list_name"))
             }
-            Button(onClick = { onCreate(name.trim(), icon) }, enabled = name.isNotBlank(), shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth().padding(top = 12.dp).height(54.dp).testTag("confirm_create_list")) { Text(strings.createList) }
+            Button(onClick = { onCreate(name.trim(), icon) }, enabled = name.isNotBlank() && !isBusy, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth().padding(top = 12.dp).height(54.dp).testTag("confirm_create_list")) { if (isBusy) CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.dp) else Text(strings.createList) }
             TextButton(onClick = onDismiss, modifier = Modifier.align(Alignment.CenterHorizontally)) { Text(strings.cancel) }
         }
     }
@@ -401,9 +430,10 @@ private fun SwitchListSheet(active: ActiveShoppingList?, lists: List<SavedShoppi
     val strings = LocalStrings.current
     val orderedLists = lists.sortedByDescending { if (it.id == active?.savedListId) 1 else 0 }
     ModalBottomSheet(onDismissRequest = onDismiss, shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)) {
-        Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(bottom = 24.dp)) {
+        Column(Modifier.fillMaxWidth().fillMaxHeight(.82f).padding(horizontal = 20.dp).padding(bottom = 24.dp)) {
             Text(strings.switchList, style = MaterialTheme.typography.titleLarge, modifier = Modifier.align(Alignment.CenterHorizontally).padding(bottom = 14.dp))
-            orderedLists.forEach { list ->
+            LazyColumn(Modifier.weight(1f)) {
+            items(orderedLists, key = { it.id }) { list ->
                 val selected = list.id == active?.savedListId
                 Surface(
                     onClick = { if (!selected) onActivate(list.id) },
@@ -417,11 +447,12 @@ private fun SwitchListSheet(active: ActiveShoppingList?, lists: List<SavedShoppi
                             Text(list.name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                             val itemCount = if (selected) active.itemCount else list.itemCount
                             val completedCount = if (selected) active.completedCount else list.completedCount
-                            Text(strings.listProgress.format(itemCount, completedCount), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(strings.listProgressText(itemCount, completedCount), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         if (selected) Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surface) { Text(strings.active, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp)) }
                     }
                 }
+            }
             }
             TextButton(onClick = onCreate, modifier = Modifier.fillMaxWidth()) { Icon(Icons.Outlined.Add, null); Text(strings.createNewList, modifier = Modifier.padding(start = 8.dp)) }
             TextButton(onClick = onManage, modifier = Modifier.fillMaxWidth()) { Text(strings.manageSavedLists) }
@@ -450,14 +481,16 @@ private fun CategoryHeader(category: ProductCategory, remainingCount: Int, total
         Text(categoryIcon(category), modifier = Modifier.padding(end = 9.dp, top = 12.dp, bottom = 12.dp))
         Text(categoryName(category), modifier = Modifier.weight(1f), color = tint, style = MaterialTheme.typography.labelLarge)
         val progress = if (remainingCount == 0) "✓" else "$remainingCount / $totalCount"
-        Surface(shape = CircleShape, color = tint.copy(alpha = .14f)) { Text(progress, color = tint, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(horizontal = 9.dp, vertical = 3.dp)) }
+        val progressDescription = strings.categoryProgressDescription(remainingCount, totalCount)
+        Surface(modifier = Modifier.semantics { contentDescription = progressDescription }, shape = CircleShape, color = tint.copy(alpha = .14f)) { Text(progress, color = tint, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(horizontal = 9.dp, vertical = 3.dp)) }
         Icon(if (collapsed) Icons.Outlined.ExpandMore else Icons.Outlined.ExpandLess, contentDescription = null, tint = tint, modifier = Modifier.padding(start = 4.dp).size(24.dp))
     }
 }
 
 @Composable
-private fun ProductRow(product: ShoppingItem, onToggle: (ShoppingItem) -> Unit, onRemove: (ShoppingItem) -> Unit, onEdit: (ShoppingItem) -> Unit, onMove: (Int) -> Unit) {
+private fun ProductRow(product: ShoppingItem, onToggle: (ShoppingItem) -> Unit, onRemove: (ShoppingItem) -> Unit, onEdit: (ShoppingItem) -> Unit, onChangeCategory: (ProductCategory) -> Unit, onMove: (Int) -> Unit) {
     var menuExpanded by remember { mutableStateOf(false) }
+    var categoryMenuExpanded by remember { mutableStateOf(false) }
     var dragging by remember { mutableStateOf(false) }
     var dragOffset by remember { mutableStateOf(0f) }
     val interactionSource = remember { MutableInteractionSource() }
@@ -497,7 +530,16 @@ private fun ProductRow(product: ShoppingItem, onToggle: (ShoppingItem) -> Unit, 
             IconButton(onClick = { menuExpanded = true }) { Icon(Icons.Outlined.MoreVert, contentDescription = LocalStrings.current.moreOptions, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
             DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                 DropdownMenuItem(text = { Text(LocalStrings.current.editProduct) }, leadingIcon = { Icon(Icons.Outlined.Edit, null) }, onClick = { menuExpanded = false; onEdit(product) })
+                DropdownMenuItem(text = { Text(LocalStrings.current.moveToCategory) }, leadingIcon = { Icon(Icons.AutoMirrored.Outlined.DriveFileMove, null) }, onClick = { menuExpanded = false; categoryMenuExpanded = true })
                 DropdownMenuItem(text = { Text(LocalStrings.current.delete) }, leadingIcon = { Icon(Icons.Outlined.DeleteOutline, null) }, onClick = { menuExpanded = false; onRemove(product) })
+            }
+            DropdownMenu(expanded = categoryMenuExpanded, onDismissRequest = { categoryMenuExpanded = false }) {
+                ProductCategory.entries.filterNot { it == product.category }.forEach { category ->
+                    DropdownMenuItem(
+                        text = { Text("${categoryIcon(category)}  ${categoryName(category)}") },
+                        onClick = { categoryMenuExpanded = false; onChangeCategory(category) },
+                    )
+                }
             }
         }
     }
@@ -538,11 +580,11 @@ private fun Modifier.reorderable(onMove: (Int) -> Unit, onDragVisual: (Boolean, 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ProductEditorSheet(item: ShoppingItem, onDismiss: () -> Unit, onSave: (ShoppingItem) -> Unit) {
-    var name by remember(item.id) { mutableStateOf(item.name) }
-    var quantity by remember(item.id) { mutableStateOf(item.quantity?.let { if (it % 1.0 == 0.0) it.toInt().toString() else it.toString() }.orEmpty()) }
-    var unit by remember(item.id) { mutableStateOf(item.unit.orEmpty()) }
-    var category by remember(item.id) { mutableStateOf(item.category) }
+private fun ProductEditorSheet(item: ShoppingItem, errorMessage: String?, isBusy: Boolean, onDismiss: () -> Unit, onSave: (ShoppingItem) -> Unit) {
+    var name by rememberSaveable(item.id) { mutableStateOf(item.name) }
+    var quantity by rememberSaveable(item.id) { mutableStateOf(item.quantity?.let { if (it % 1.0 == 0.0) it.toInt().toString() else it.toString() }.orEmpty()) }
+    var unit by rememberSaveable(item.id) { mutableStateOf(item.unit.orEmpty()) }
+    var category by rememberSaveable(item.id) { mutableStateOf(item.category) }
     val quantityFocus = remember { FocusRequester() }
     val unitFocus = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
@@ -556,6 +598,8 @@ private fun ProductEditorSheet(item: ShoppingItem, onDismiss: () -> Unit, onSave
                     { name = it },
                     label = { Text(strings.productName) },
                     singleLine = true,
+                    isError = errorMessage != null,
+                    supportingText = errorMessage?.let { message -> { Text(message) } },
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                     keyboardActions = KeyboardActions(onNext = { quantityFocus.requestFocus() }),
                     shape = RoundedCornerShape(14.dp),
@@ -594,7 +638,7 @@ private fun ProductEditorSheet(item: ShoppingItem, onDismiss: () -> Unit, onSave
                     ProductCategory.entries.forEach { option -> FilterChip(selected = category == option, onClick = { category = option }, label = { Text(categoryName(option)) }) }
                 }
             }
-            Button(onClick = { onSave(item.copy(name = name.trim(), quantity = quantity.replace(',', '.').toDoubleOrNull(), unit = unit.trim().ifBlank { null }, category = category)) }, enabled = name.isNotBlank(), shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 16.dp).height(52.dp).testTag("save_product")) { Text(strings.save) }
+            Button(onClick = { onSave(item.copy(name = name.trim(), quantity = quantity.replace(',', '.').toDoubleOrNull(), unit = unit.trim().ifBlank { null }, category = category)) }, enabled = name.isNotBlank() && !isBusy, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 16.dp).height(52.dp).testTag("save_product")) { if (isBusy) CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.dp) else Text(strings.save) }
         }
     }
 }

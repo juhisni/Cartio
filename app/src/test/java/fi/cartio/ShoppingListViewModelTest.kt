@@ -11,6 +11,7 @@ import fi.cartio.domain.repository.CartioRepository
 import fi.cartio.feature.shoppinglist.ShoppingListViewModel
 import fi.cartio.feature.shoppinglist.exactCatalogMatch
 import fi.cartio.feature.shoppinglist.groupItemsForDisplay
+import fi.cartio.feature.shoppinglist.EditResult
 import fi.cartio.domain.suggestion.normalizeProductInput
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -141,21 +142,32 @@ class ShoppingListViewModelTest {
 
         assertFalse(viewModel.state.value.canAddQuery)
     }
+
+    @Test fun rejectedProductRenamePublishesDuplicateNameResult() = runTest(dispatcher) {
+        val repository = FakeRepository(updateSucceeds = false)
+        val viewModel = ShoppingListViewModel(repository)
+        val result = async { viewModel.productEdits.first() }
+
+        viewModel.update(ShoppingItem(1, "Milk", "milk", category = ProductCategory.DAIRY))
+        advanceUntilIdle()
+
+        assertEquals(EditResult.DUPLICATE_NAME, result.await())
+    }
 }
 
-private class FakeRepository : CartioRepository {
+private class FakeRepository(private val updateSucceeds: Boolean = true) : CartioRepository {
     private val mutableItems = MutableStateFlow<List<ShoppingItem>>(emptyList())
     override val items = mutableItems
     override val savedLists = MutableStateFlow<List<SavedShoppingList>>(emptyList())
     override val activeList = MutableStateFlow<ActiveShoppingList?>(ActiveShoppingList(1, "Test list", 0, 0))
-    override suspend fun createList(name: String, icon: SavedListIcon) = Unit
-    override suspend fun activateList(id: Long) = Unit
+    override suspend fun createList(name: String, icon: SavedListIcon): Long? = 1L
+    override suspend fun activateList(id: Long) = true
     override suspend fun add(name: String, categoryOverride: ProductCategory?): ShoppingItem {
         val category = categoryOverride ?: if (name.lowercase() == "leipä") ProductCategory.BREAD_GRAINS else ProductCategory.DAIRY
         return ShoppingItem((mutableItems.value.size + 1).toLong(), name.replaceFirstChar { it.uppercase() }, normalizeProductInput(name), category = category).also { mutableItems.value += it }
     }
     override suspend fun toggle(item: ShoppingItem) { mutableItems.value = listOf(item.copy(checked = !item.checked)) }
-    override suspend fun update(item: ShoppingItem) { mutableItems.value = listOf(item) }
+    override suspend fun update(item: ShoppingItem): Boolean { if (updateSucceeds) mutableItems.value = listOf(item); return updateSucceeds }
     override suspend fun reorder(items: List<ShoppingItem>) { mutableItems.value = items }
     override suspend fun markAllIncomplete(): List<ShoppingItem>? {
         val previous = mutableItems.value
@@ -172,7 +184,7 @@ private class FakeRepository : CartioRepository {
     override suspend fun restoreCurrent(items: List<ShoppingItem>) { mutableItems.value = items }
     override suspend fun remove(id: Long) { mutableItems.value = emptyList() }
     override suspend fun restoreItem(item: ShoppingItem) { mutableItems.value = listOf(item) }
-    override suspend fun save(name: String) = Unit; override suspend fun restore(id: Long) = Unit; override suspend fun updateList(id: Long, name: String, icon: SavedListIcon) = Unit
+    override suspend fun save(name: String) = Unit; override suspend fun restore(id: Long) = true; override suspend fun updateList(id: Long, name: String, icon: SavedListIcon) = true
     override suspend fun duplicateList(id: Long, name: String): Long? = null
     override suspend fun deleteSaved(id: Long): fi.cartio.core.model.SavedListSnapshot? = null
     override suspend fun restoreSaved(snapshot: fi.cartio.core.model.SavedListSnapshot) = Unit

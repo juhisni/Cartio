@@ -2,9 +2,11 @@ package fi.cartio
 
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.assertTextContains
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Rule
 import org.junit.Test
@@ -16,9 +18,13 @@ class QuickAddFlowTest {
     @get:Rule val rule = createAndroidComposeRule<MainActivity>()
 
     private fun ensureActiveList(name: String) {
-        if (runCatching { rule.onNodeWithTag("open_quick_add").fetchSemanticsNode() }.isSuccess) return
-        rule.onNodeWithTag("create_new_list").performClick()
-        rule.onNodeWithTag("new_list_name").performTextInput(name)
+        if (runCatching { rule.onNodeWithTag("open_quick_add").fetchSemanticsNode() }.isSuccess) {
+            rule.onNodeWithTag("active_list_card").performClick()
+            rule.onNodeWithText("Create new list").performClick()
+        } else {
+            rule.onNodeWithTag("create_new_list").performClick()
+        }
+        rule.onNodeWithTag("new_list_name").performTextInput("$name ${System.nanoTime()}")
         rule.onNodeWithTag("confirm_create_list").performClick()
         rule.waitUntil(5_000) {
             runCatching { rule.onNodeWithTag("open_quick_add").fetchSemanticsNode() }.isSuccess
@@ -30,15 +36,15 @@ class QuickAddFlowTest {
         rule.waitForIdle()
         ensureActiveList("Milk test")
         rule.onNodeWithTag("open_quick_add").performClick()
-        rule.onNodeWithTag("quick_add_input").performTextInput("maito")
+        rule.onNodeWithTag("quick_add_input").performTextInput("milk")
         rule.onNodeWithTag("quick_add_input").performImeAction()
-        rule.waitUntil(5_000) { runCatching { rule.onNodeWithTag("product_maito").fetchSemanticsNode() }.isSuccess }
+        rule.waitUntil(5_000) { runCatching { rule.onNodeWithTag("product_milk").fetchSemanticsNode() }.isSuccess }
         rule.onNodeWithTag("category_DAIRY").fetchSemanticsNode()
-        rule.onNodeWithTag("product_maito").fetchSemanticsNode()
+        rule.onNodeWithTag("product_milk").fetchSemanticsNode()
         rule.onNodeWithTag("quick_add_input").fetchSemanticsNode()
-        rule.onNodeWithTag("quick_add_input").performTextInput("maito")
+        rule.onNodeWithTag("quick_add_input").performTextInput("milk")
         rule.waitForIdle()
-        assertFalse(runCatching { rule.onNodeWithTag("suggestion_maito").fetchSemanticsNode() }.isSuccess)
+        assertFalse(runCatching { rule.onNodeWithTag("suggestion_milk").fetchSemanticsNode() }.isSuccess)
         assertFalse(runCatching { rule.onNodeWithTag("add_typed_product").fetchSemanticsNode() }.isSuccess)
     }
 
@@ -58,5 +64,18 @@ class QuickAddFlowTest {
         }
         rule.onNodeWithTag("category_OTHER").fetchSemanticsNode()
         rule.onNodeWithTag("quick_add_input").fetchSemanticsNode()
+    }
+
+    @Test fun quickAddQueryAndSheetSurviveActivityRecreation() {
+        rule.mainClock.advanceTimeBy(2_500)
+        rule.waitForIdle()
+        ensureActiveList("Recreation test")
+        rule.onNodeWithTag("open_quick_add").performClick()
+        rule.onNodeWithTag("quick_add_input").performTextInput("ban")
+
+        rule.activityRule.scenario.recreate()
+        rule.waitForIdle()
+
+        rule.onNodeWithTag("quick_add_input").assertTextContains("ban")
     }
 }

@@ -14,11 +14,11 @@ interface CartioRepository {
     val items: Flow<List<ShoppingItem>>
     val savedLists: Flow<List<SavedShoppingList>>
     val activeList: Flow<ActiveShoppingList?>
-    suspend fun createList(name: String, icon: SavedListIcon)
-    suspend fun activateList(id: Long)
+    suspend fun createList(name: String, icon: SavedListIcon): Long?
+    suspend fun activateList(id: Long): Boolean
     suspend fun add(name: String, categoryOverride: ProductCategory? = null): ShoppingItem
     suspend fun toggle(item: ShoppingItem)
-    suspend fun update(item: ShoppingItem)
+    suspend fun update(item: ShoppingItem): Boolean
     suspend fun reorder(items: List<ShoppingItem>)
     suspend fun markAllIncomplete(): List<ShoppingItem>?
     suspend fun removeCompleted(): List<ShoppingItem>?
@@ -26,8 +26,8 @@ interface CartioRepository {
     suspend fun remove(id: Long)
     suspend fun restoreItem(item: ShoppingItem)
     suspend fun save(name: String)
-    suspend fun restore(id: Long)
-    suspend fun updateList(id: Long, name: String, icon: SavedListIcon)
+    suspend fun restore(id: Long): Boolean
+    suspend fun updateList(id: Long, name: String, icon: SavedListIcon): Boolean
     suspend fun duplicateList(id: Long, name: String): Long?
     suspend fun deleteSaved(id: Long): SavedListSnapshot?
     suspend fun restoreSaved(snapshot: SavedListSnapshot)

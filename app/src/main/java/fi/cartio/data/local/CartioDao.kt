@@ -34,6 +34,7 @@ interface CartioDao {
     )
     fun observeSavedLists(): Flow<List<SavedShoppingListSummary>>
     @Query("SELECT * FROM saved_lists WHERE id = :id") suspend fun getSavedList(id: Long): SavedShoppingListEntity?
+    @Query("SELECT * FROM saved_lists") suspend fun getSavedLists(): List<SavedShoppingListEntity>
     @Query("SELECT COUNT(*) FROM saved_list_items WHERE listId = :id") suspend fun savedItemCount(id: Long): Int
     @Insert suspend fun insertSavedList(list: SavedShoppingListEntity): Long
     @Insert suspend fun insertSavedItems(items: List<SavedShoppingListItemEntity>)
@@ -71,6 +72,7 @@ interface CartioDao {
     }
 
     @Transaction suspend fun createAndActivateList(name: String, icon: SavedListIcon = SavedListIcon.CART): Long {
+        if (getSavedLists().any { it.name.sameListName(name) }) return 0
         syncCurrentToActiveList()
         val now = System.currentTimeMillis()
         val id = insertSavedList(SavedShoppingListEntity(name = name, createdAt = now, icon = icon))
@@ -79,13 +81,14 @@ interface CartioDao {
         return id
     }
 
-    @Transaction suspend fun activateSavedList(id: Long) {
-        val list = getSavedList(id) ?: return
+    @Transaction suspend fun activateSavedList(id: Long): Boolean {
+        val list = getSavedList(id) ?: return false
         syncCurrentToActiveList()
         clearItems()
         val now = System.currentTimeMillis()
         getSavedItems(id).forEach { insertItem(ShoppingItemEntity(name = it.name, normalizedName = it.normalizedName, quantity = it.quantity, unit = it.unit, category = it.category, checked = it.checked, createdAt = now, updatedAt = now, sortOrder = it.sortOrder)) }
         upsertActiveList(ActiveShoppingListEntity(savedListId = id, name = list.name, createdAt = list.createdAt, icon = list.icon))
+        return true
     }
 
     @Transaction suspend fun restoreSavedList(list: SavedShoppingListEntity, items: List<SavedShoppingListItemEntity>) {
@@ -95,8 +98,9 @@ interface CartioDao {
 
     @Transaction suspend fun duplicateSavedList(id: Long, name: String): Long? {
         val source = getSavedList(id) ?: return null
+        if (getSavedLists().any { it.name.sameListName(name) }) return null
         val duplicateId = insertSavedList(source.copy(id = 0, name = name, createdAt = System.currentTimeMillis()))
-        insertSavedItems(getSavedItems(id).map { it.copy(id = 0, listId = duplicateId) })
+        insertSavedItems(getSavedItems(id).map { it.copy(id = 0, listId = duplicateId, checked = false) })
         return duplicateId
     }
 
@@ -111,9 +115,11 @@ interface CartioDao {
         return SavedListEntitySnapshot(list, items)
     }
 
-    @Transaction suspend fun updateList(id: Long, name: String, icon: SavedListIcon) {
+    @Transaction suspend fun updateList(id: Long, name: String, icon: SavedListIcon): Boolean {
+        if (getSavedLists().any { it.id != id && it.name.sameListName(name) }) return false
         updateSavedList(id, name, icon)
         getActiveList()?.takeIf { it.savedListId == id }?.let { upsertActiveList(it.copy(name = name, icon = icon)) }
+        return true
     }
 
     @Transaction suspend fun reorderCurrent(items: List<ShoppingItemEntity>) {
@@ -143,3 +149,6 @@ interface CartioDao {
         syncCurrentToActiveList()
     }
 }
+
+private fun String.sameListName(other: String): Boolean =
+    trim().replace(Regex("\\s+"), " ").equals(other.trim().replace(Regex("\\s+"), " "), ignoreCase = true)

@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -34,9 +35,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -54,6 +58,7 @@ import fi.cartio.core.model.AppLanguage
 import fi.cartio.core.model.ThemePreference
 import fi.cartio.R
 import androidx.core.content.pm.PackageInfoCompat
+import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsRoute(viewModel: SettingsViewModel, contentPadding: PaddingValues, onOpenAbout: () -> Unit) {
@@ -99,18 +104,24 @@ fun AboutCartioScreen(contentPadding: PaddingValues, onBack: () -> Unit) {
     val strings = LocalStrings.current
     val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
+    val snackbar = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val openUri: (String) -> Unit = { uri ->
+        runCatching { uriHandler.openUri(uri) }.onFailure { scope.launch { snackbar.showSnackbar(strings.linkUnavailable) } }
+    }
     val version = remember(context) {
         context.packageManager.getPackageInfo(context.packageName, 0).let { info ->
             info.versionName.orEmpty() to PackageInfoCompat.getLongVersionCode(info)
         }
     }
-    LazyColumn(
-        Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
-        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = contentPadding.calculateTopPadding() + 16.dp, bottom = contentPadding.calculateBottomPadding() + 24.dp),
-    ) {
+    Box(Modifier.fillMaxSize()) {
+      LazyColumn(
+          Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
+          contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = contentPadding.calculateTopPadding() + 16.dp, bottom = contentPadding.calculateBottomPadding() + 24.dp),
+      ) {
         item {
             Row(Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(bottom = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = strings.cancel) }
+                IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = strings.back) }
                 Text(strings.appInfo, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 4.dp))
             }
         }
@@ -129,12 +140,12 @@ fun AboutCartioScreen(contentPadding: PaddingValues, onBack: () -> Unit) {
                 Text(strings.developerAndSupport, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
                 AboutInfoRow(Icons.Outlined.Person, strings.developedBy, "Juha-Matti Niiranen")
                 AboutInfoRow(Icons.Outlined.Email, strings.contactSupport, "cartiosupport@gmail.com") {
-                    uriHandler.openUri("mailto:cartiosupport@gmail.com?subject=Cartio%20support")
+                    openUri("mailto:cartiosupport@gmail.com?subject=Cartio%20support")
                 }
                 HorizontalDivider(Modifier.padding(horizontal = 16.dp, vertical = 12.dp), color = MaterialTheme.colorScheme.outlineVariant)
                 Text(strings.privacyAndData, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
                 AboutInfoRow(Icons.Outlined.Policy, strings.privacyPolicy, strings.privacyPolicyBody) {
-                    uriHandler.openUri("https://juhisni.github.io/Cartio/privacy/")
+                    openUri("https://juhisni.github.io/Cartio/privacy/")
                 }
                 AboutInfoRow(Icons.Outlined.Lock, strings.privacySummary)
                 AboutInfoRow(Icons.Outlined.Save, strings.localStorage, strings.localStorageBody)
@@ -144,10 +155,12 @@ fun AboutCartioScreen(contentPadding: PaddingValues, onBack: () -> Unit) {
                 Text(strings.legalAndLicenses, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
                 AboutInfoRow(Icons.Outlined.Gavel, strings.copyrightNotice, strings.allRightsReserved)
                 AboutInfoRow(Icons.Outlined.Policy, strings.legalNotices, strings.legalNoticesBody) {
-                    uriHandler.openUri("https://juhisni.github.io/Cartio/legal/")
+                    openUri("https://juhisni.github.io/Cartio/legal/")
                 }
             }
         }
+      }
+      SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).padding(bottom = contentPadding.calculateBottomPadding() + 16.dp))
     }
 }
 
